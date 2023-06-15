@@ -1,0 +1,17 @@
+{
+  "name": "adintel-microservice",
+  "version": "1.0.0",
+  "description": "Servicio web en NodeJS para automatizar peticiones al Ad Server.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "gonzalosanto",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "libxmljs2": "^0.32.0",
+    "xml-js": "^1.6.11"
+  },
+  "type": "module"
+}
