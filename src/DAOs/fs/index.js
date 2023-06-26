@@ -13,12 +13,7 @@ const save = (data, file, format) => {
     if(!file) file = path.join(root, `./public/logs/response.${format}`)
     if(String(data).includes("ServerError")) file = path.join(root, `./public/logs/${currentDate()}_error.txt`);
     console.log(`Saving data to : ${file}`);
-    console.log()
-    if(fs.existsSync(logPath)){
-        fs.appendFileSync(logPath, data)
-    } else {
-        fs.writeFileSync(logPath, data);
-    }
+    writeDataIf(data, file);
 }
 /**
  * For development purpose and debugging only intended function
@@ -26,27 +21,31 @@ const save = (data, file, format) => {
  */
 const saveResponse = (data) => {
     let logPath = path.join(root, `./public/debug/response.xml`);
-    if(fs.existsSync(logPath)){
-        fs.appendFileSync(logPath, data)
-    } else {
-        fs.writeFileSync(logPath, data);
-    }
+    writeDataIf(data, logPath)
 }
 
+const saveDebug = (data) => {
+    let logPath = path.join(root, `./public/debug/debug-log.xml`);
+    writeDataIf(data, logPath)
+}
 /**
  * For development purpose and debugging only intended function
  * @param {String} data  
  */
 const saveError = (data) => {
     let logPath = path.join(root, `./public/debug/errors.xml`);
-    if(fs.existsSync(logPath)){
-        fs.appendFileSync(logPath, data)
+    writeDataIf(data, logPath);
+}
+
+const writeDataIf = (data, file) => {
+    if(fs.existsSync(file)){
+        fs.appendFile(file, data, (e)=> {throw e})
     } else {
-        fs.writeFileSync(logPath, data);
+        fs.writeFile(file, data, (e)=> {throw e});
     }
 }
 
 
 
 
-export { save, saveResponse, saveError }
+export { saveDebug, saveResponse, saveError }

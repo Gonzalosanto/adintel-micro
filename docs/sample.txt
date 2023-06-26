@@ -1,4 +1,4 @@
-bundle;app_name;store_url;device_id;UA;IP;;
+app_bundle;app_name;app_store_url;device_id;ua;uip;;
 com.roku-lifetime.app;Lifetime;https%3A%2F%2Fchannelstore.roku.com%2Fen-gb%2Fdetails%2F7ac9a68dac25246d92c17a02631beff2%2FLifetime;00001695-b0ed-4f7c-b518-83c2a72870a1;Roku%2FDVP-10.0+(10.0.0.4208-C2);66.91.76.178;;
 462780547;Watch TBS;https%3A%2F%2Fitunes.apple.com%2Fapp%2Fid462780547;00001e38-9baa-4827-a7eb-72611de6448a;AppleCoreMedia%2F1.0.0.18J386+(Apple+TV%3B+U%3B+CPU+OS+14_0+like+Mac+OS+X%3B+en_us);67.148.187.125;;
 com.crackle.roku;crackle;https%3A%2F%2Fchannelstore.roku.com%2Fen-gb%2Fdetails%2F5ea83b05b288012e221b03a1020709cd%2Fcrackle;00002QFC7W9D;Roku%2FDVP-10.5+(10.5.2.4118-CT);67.3.137.220;;

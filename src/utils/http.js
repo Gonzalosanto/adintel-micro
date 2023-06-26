@@ -12,7 +12,8 @@ const getVastTag = (data) => {
     if(stringifiedData.includes(tag)){
         json = XML.xml2json(data, {compact:true})
         json = JSON.parse(json);
-        return json.VAST.Ad.Wrapper[tag]._cdata
+        console.log(JSON.stringify(json))
+        return json?.VAST?.Ad?.Wrapper[tag]?._cdata
     } else {
         error(` Could not retrieve VAST Tag URI, received: ${stringifiedData}`)
         return null;
@@ -20,10 +21,17 @@ const getVastTag = (data) => {
 }
 
 const handleSuccesfulResponse = (r) => {
-    let jsonData = XML.xml2json(r, {compact:true})
-    jsonData = JSON.parse(jsonData);
-    const isSuccess = jsonData.VAST.hasOwnProperty('InLine')
-    return isSuccess != null && isSuccess;
+    try {
+        let jsonData = XML.xml2json(r, {compact:true})
+        console.log(jsonData)
+        jsonData = JSON.parse(jsonData);
+        if(jsonData == null || jsonData == undefined ) throw `!!! ----/// ${JSON.stringify(jsonData)}`
+        const isSuccess = jsonData.VAST.hasOwnProperty('InLine')
+        return isSuccess != null && isSuccess;
+    } catch (e) {
+        error(e)
+    }
+    
 }
 
 const getHeadersFromResponse = (r) => {

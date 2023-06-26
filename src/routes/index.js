@@ -14,7 +14,3 @@ router.get('/abort', (req,res, next) => {
     abort(req,res,next)
 })
 router.get('/', (req,res, next)=> {res.send("Listening...") })
-
-// const get = async (req,res) => { //launch process
-//     getRequest(req,res, templateURL)
-// }

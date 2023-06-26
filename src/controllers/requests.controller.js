@@ -1,5 +1,5 @@
-import { save, saveError, saveResponse } from "../DAOs/fs/index.js";
-import { info,error } from '../middlewares/logger/index.js';
+import { saveDebug, saveError, saveResponse } from "../DAOs/fs/index.js";
+import { info,error, warning } from '../middlewares/logger/index.js';
 import { getHeadersFromResponse, getVastTag, handleSuccesfulResponse } from "../utils/http.js";
 
 
@@ -9,22 +9,26 @@ const getRequest = async (req,res,adserver) => {
     let tempURL = adserver;
     let eventChain = [];
     let isSuccesful = false; //Request is succesful when gets expected response
+    let isCriticalError = false;
+    let attempts = 0;
     let headers;
     let data = {};
-    while (!isSuccesful) {
+    while (attempts < 10 && (!isSuccesful && !isCriticalError)) {
         try {
+            warning(attempts)
             const response = await fetch(tempURL)
             const clone = response.clone();
             headers = getHeadersFromResponse(clone);
             data = {   
                 date: new Date().toISOString(),
                 request:{
-                    url: adserver,
+                    url: tempURL,
                     headers: []
                 },
                 response : {
                     url: clone.url,
                     type: clone.type,
+                    ok: clone.ok,
                     status: clone.status,
                     headers: headers, 
                 },
@@ -32,10 +36,14 @@ const getRequest = async (req,res,adserver) => {
             }
             eventChain.push(data);
             tempURL = urlFromResponse(data);
-            //if(!clone.ok) {error(xmlString); saveError(JSON.stringify(eventChain))};
+            if(!data.response.ok){error(data.body); saveDebug(JSON.stringify(eventChain))};
+            attempts++;
+            info(`Status code: ${data.response.status}`)
             isSuccesful = handleSuccesfulResponse(data.body)
         } catch (err) {
-            error(err);
+            isCriticalError = true;
+            saveError(JSON.stringify(eventChain));
+            throw new Error(err);
         }
     }
     saveError(JSON.stringify(eventChain)); //Once the chain finishes append it into debug log
