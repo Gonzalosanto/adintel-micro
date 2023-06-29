@@ -66,6 +66,7 @@ const processMacros = (url, id, keys, data) => {
         urlWithMacros.searchParams.set('height', macros.height)
         urlWithMacros.searchParams.set('aid', id);
         urlWithMacros.searchParams.set('device_category', macros.device_category)
+        urlWithMacros.searchParams.set('vast_version', '2')
     });
 
     try {
@@ -79,7 +80,7 @@ const processMacros = (url, id, keys, data) => {
 export const processData = (url, id, data) => {
     const urls = [];
     const keys = data[0] //el indice 0 solo tiene las keys del CSV, el resto son valores     const urls = [];
-    for (let i = 1; i <= 10; i++) { 
+    for (let i = 40; i <= 100; i++) { 
         urls.push(processMacros(url, id, keys, data[i]))   
     }
     return urls;

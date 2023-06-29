@@ -6,6 +6,10 @@ export const warning = (w) => {
     console.warn(`\x1b[33m ${w}\x1b[0m`);
 }
 
+export const debug = (d) => {
+    console.debug(`\x1b[32m${d}\x1b[0m`)
+}
+
 export const info = (i) => {
     console.info(`\x1b[37m${i}\x1b[0m`);
 }
