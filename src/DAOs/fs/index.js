@@ -1,6 +1,7 @@
 import fs from "fs";
 import * as path from 'path';
 import { currentDate } from "../../utils/date.js";
+import { error, info } from "../../middlewares/logger/index.js";
 
 const root = process.cwd();
 /**
@@ -25,7 +26,7 @@ const saveResponse = (data) => {
 }
 
 const saveDebug = (data) => {
-    let logPath = path.join(root, `./public/debug/debug-log.xml`);
+    let logPath = path.join(root, `./public/debug/debug.xml`);
     writeDataIf(data, logPath)
 }
 /**
@@ -36,16 +37,23 @@ const saveError = (data) => {
     let logPath = path.join(root, `./public/debug/errors.xml`);
     writeDataIf(data, logPath);
 }
+const saveChain = (data) => {
+    let logPath = path.join(root, `./public/debug/chains.xml`);
+    writeDataIf(data, logPath);
+}
 
 const writeDataIf = (data, file) => {
     if(fs.existsSync(file)){
-        fs.appendFile(file, data, (e)=> {throw e})
+        fs.appendFile(file, data, (e)=> {
+            if(e) throw e;
+            info(`Data appended to: ${file}`)
+        })
     } else {
-        fs.writeFile(file, data, (e)=> {throw e});
+        fs.writeFile(file, data, (e)=> {
+            if(e) throw e;
+            info(`File: ${file} written`)
+        });
     }
 }
 
-
-
-
-export { saveDebug, saveResponse, saveError }
+export { saveDebug, saveChain, saveResponse, saveError }

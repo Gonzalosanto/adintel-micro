@@ -1,21 +1,14 @@
-// import { getRequest } from "../../controllers/requests.controller";
-// import { templateURL } from '../../config/index.js';
-import { getRequest } from "../../controllers/requests.controller.js";
+import { runRequestsConcurrently } from "../../controllers/concurrency.js";
 import { getURLsWithMacros } from "../../utils/csv.js";
 
 const start = async (req,res, next) => {
-    try {
-        const data = await getURLsWithMacros("",'','')
-        for (let n=0; n<data.length; n++){
-            await getRequest(req,res,data[n])
-        }
-        console.log('Finished requesting...')
-    } catch (error) {
-        console.error(error)
-    }
-
-
-    //getRequest(req,res, templateURL)
+    getURLsWithMacros("",'','').then((data)=>{
+        runRequestsConcurrently(data,200);
+    })
+    .catch(e => {
+        error(e);
+        res.status(500);
+    })
 }
 const abort = (req,res, next) => {
     console.warn("Killing process...")

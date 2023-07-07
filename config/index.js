@@ -15,6 +15,9 @@ const macros = {
     vast_version:'2.0',
 }
 
+const AID = 835805;
+const BASE_URL = 'http://s.adtelligent.com';
+
 // Params obligatorios:  bundle, app-name, store-url
 // Params rotativo : UIP y UA
 // Fijos: Width Height - Device-Category, Vast-Version:2.0,
@@ -24,4 +27,4 @@ const macros = {
 
 const templateURL = encodeURI(`http://s.adtelligent.com/?width=${macros.width}&height=${macros.height}&cb=${macros.cb}&ua=${macros.ua}&uip=${macros.uip}&app_name=${macros.app_name}&app_bundle=${macros.app_bundle}&device_model=${macros.device_model}&device_make=${macros.device_make}&device_category=${macros.device_category}&app_store_url=${macros.app_store_url}&device_id=${macros.device_id}&vast_version=${macros.vast_version}&aid=833181`
 )
-export { PORT, templateURL };
+export { BASE_URL, AID, PORT, templateURL };

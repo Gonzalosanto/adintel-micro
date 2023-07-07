@@ -2,7 +2,7 @@ import { parse } from "csv-parse";
 import fs from "fs"
 import path from "path";
 import { error } from "../middlewares/logger/index.js";
-import { getRequest } from "../controllers/requests.controller.js";
+import {AID, BASE_URL} from "../../config/index.js"
 
 const VAST_VERSION = {
     '2' : '2.0',
@@ -39,10 +39,16 @@ const macros = {
     vast_version: VAST_VERSION[4],
 }
 
-const processFile = async (filename) => {
+//este es la URL con el orden adecuado de las macros: 
+//http://s.adtelligent.com/?width=[replace_me]&height=[replace_me]
+//&cb=[replace_me]&ua=[replace_me]&uip=[replace_me]&app_name=[replace_me]&app_bundle=[replace_me]
+//&device_model=[replace_me]&device_make=[replace_me]&device_category=[replace_me]&app_store_url=[replace_me]
+//&device_id=[replace_me]&vast_version=2&aid=833181 
+
+const processFile = async (filename, delimiter) => {
     const records = [];
     const parser = fs.createReadStream(path.join(process.cwd(), filename)).pipe(parse({
-        delimiter:';',
+        delimiter:delimiter || ',',
         skip_records_with_empty_values:true,
         skip_records_with_error:true
     }));
@@ -52,41 +58,30 @@ const processFile = async (filename) => {
     return records;
 }
 
-const processMacros = (url, id, keys, data) => {
-    if (typeof url !== 'string' || typeof data !== 'object' || typeof keys !== 'object') {
+const setMacros = (url, id, keys, data) => {
+    let entries = []    
+    if (typeof url !== 'string' ||typeof data !== 'object' || typeof keys !== 'object') {
         throw new Error('Invalid input parameters');
     }
-
-    let urlWithMacros = new URL(url);
-    Object.values(data).forEach((field, i) => {
-        if(i<6 && keys[i] != 'device_id'){
-            urlWithMacros.searchParams.set(keys[i], field);
-        }
-        urlWithMacros.searchParams.set('width', macros.width)
-        urlWithMacros.searchParams.set('height', macros.height)
-        urlWithMacros.searchParams.set('aid', id);
-        urlWithMacros.searchParams.set('device_category', macros.device_category)
-        urlWithMacros.searchParams.set('vast_version', '2')
-    });
-
-    try {
-        return urlWithMacros.toString();
-    } catch (err) {
-        error('Error processing macros:', err);
-        return null;
-    }
+    Object.values(data).forEach((d,i) =>{
+        entries.push([keys[i],d])
+    })
+    entries = Object.fromEntries(entries);
+    let urlWithMacros = `${url}/?width=${DIMENSIONS["16:9"].FHD.width}&height=${DIMENSIONS["16:9"].FHD.height}&cb=&ua=${entries.ua}&uip=${entries.uip}&app_name=${entries.app_name}&app_bundle=${entries.app_bundle}&device_model=&device_make=&device_category=${CATEGORY.CTV}&app_store_url=${encodeURIComponent(entries.app_store_url)}&device_id=&vast_version=${VAST_VERSION[2]}&aid=${id}`;
+    try {return urlWithMacros.toString();}
+    catch (err) {error('Error processing macros:', err);return null;}
 }
 // Es temporal, se supone que los datos llegan en el request del core-service
-export const processData = (url, id, data) => {
+export const processData = (baseUrl, id, data) => {
     const urls = [];
-    const keys = data[0] //el indice 0 solo tiene las keys del CSV, el resto son valores     const urls = [];
-    for (let i = 40; i <= 100; i++) { 
-        urls.push(processMacros(url, id, keys, data[i]))   
+    const keys = data[0] //el indice 0 solo tiene las keys del CSV, el resto son valores
+    for (let i = 1; i < data.length; i++) {
+        urls.push(setMacros(baseUrl, id, keys, data[i]))
     }
     return urls;
 }
 
 export const getURLsWithMacros = async (url, id, filename) => {
-    const d = await processFile('./docs/sample.txt')
-    return processData('http://s.adtelligent.com','833131', d)
+    const fileContent = await processFile('./docs/csv.txt', ',')
+    return processData(BASE_URL, AID, fileContent)
 }

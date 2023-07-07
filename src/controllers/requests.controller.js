@@ -1,6 +1,6 @@
-import { saveDebug, saveError, saveResponse } from "../DAOs/fs/index.js";
+import { saveDebug, saveError, saveChain, saveResponse } from "../DAOs/fs/index.js";
 import { info,error, warning, debug } from '../middlewares/logger/index.js';
-import { getVastTag, handleSuccesfulResponse, baseFrom } from "../utils/http.js";
+import { getVASTTagURI,handleBrokenResponse, handleErrorResponse, handleSuccesfulResponse, buildHeaders, baseFrom, addIfXMLResponse } from "../utils/http.js";
 import fetch from "node-fetch";
 
 //Chaining requests, async function to get a chain
@@ -9,141 +9,105 @@ const getRequest = async (req,res,adserver) => {
         const params = Object.fromEntries(searchParams)
         const headers = {
             'Connection': 'keep-alive',
+            'Access-Control-Allow-Origin':'*',
+            'Access-Control-Allow-Credentials':true,
             'Accept': `*/*`,
             'Accept-Encoding': 'gzip, deflate',
             'Accept-Language': 'en-US',
             'Cache-Control': 'no-cache',
             'Pragma': 'no-cache',
-            'X-Forwarded-For': params.uip || '',
-            'Referer': decodeURIComponent(params.app_store_url) || '',
-            'Origin': baseFrom(decodeURIComponent(params.app_store_url)) || '',
-            'Host': '', //implicit header
-            'User-Agent': params.ua,
+            'X-Forwarded-For':params.uip || '',
+            'User-Agent': params.ua || '',
         }
         return headers;
     }
-
+    let url = adserver;
+    const params = new URL(url).searchParams;
+    const reqHeaders = setRequestHeaders(params);
+    let retries = 0;
     let cookies = [];
-    const params = new URL(adserver).searchParams;
-    const reqHeaders = setRequestHeaders(params)
-    let request = new Request(adserver)
     let eventsChain = {
         eventChain : [],
+        XMLChain : [],
+        previousURL:url,
         isSuccesful: false,
+        isBroken: false,
         isCriticalError: false,
-        attempts: 0
+        isCommonError: false,
     }
-    let resHeaders;
     let data = {};
-    while (eventsChain.attempts < 4 && (!eventsChain.isSuccesful && !eventsChain.isCriticalError)) {
+    while (!eventsChain.isSuccesful && (!eventsChain.isBroken && !eventsChain.isCriticalError) && retries <= 5){
         try {
-            const response = await fetch(request.url, {
+            let options = {
                 redirect:'follow',
                 headers: reqHeaders,
-            })
-            const clone = response.clone();
-            cookies = clone.headers.get('Set-Cookie') ? clone.headers.get('Set-Cookie') : ''
-            cookies = cookies.split(';')[0]
-            resHeaders = JSON.stringify(clone.headers);
-            data = {   
-                date: new Date().toISOString(),
-                request:{url:request.url,
-                    headers:reqHeaders,
-                },
-                response : {
-                    url: clone.url,
-                    type: clone.type,
-                    ok: clone.ok,
-                    status: clone.status,
-                    headers: resHeaders, 
-                },
-                error: '',
-                body: await clone.text(),
             }
+            const response = await fetch(url, options);
+            cookies = response.headers.get('Set-Cookie')?.split(';')[0] || '';
+            data = await dataToLog(reqHeaders, response, url);
+            eventsChain.previousURL = url
             eventsChain.eventChain.push(data);
-            if(clone.ok){
-                request = buildRequest(getVASTTagURI(data),{
-                    'Cookies': cookies,
-                }, setRequestHeaders(params))
-
-                eventsChain.isSuccesful = handleSuccesfulResponse(data.body)
+            if(response.status == 200){
+                options.headers['Cookies'] = cookies
+                eventsChain.XMLChain = addIfXMLResponse(response.body, eventsChain.XMLChain)
+                eventsChain.isBroken = handleBrokenResponse(data.body);
+                eventsChain.isCommonError = handleErrorResponse(data.body);
+                eventsChain.isSuccesful = handleSuccesfulResponse(data.body);
+                url = handleURLAfterResponse(data.body, eventsChain);
             }
-            if(clone.status == 302 || clone.status == 301) {
-                warning(`Redirection! Location found: ${data.response.headers.location}`);
-                handleRedirection(clone, reqHeaders);
-            }
-            if(!clone.ok && !clone.redirected){
-                error({request: data.request, response: data.response, body: data.body});
-                saveDebug(JSON.stringify(eventsChain.eventChain))
-            };
-            eventsChain.attempts++;
+            retries++;
         } catch (err) {
+            retries++;
             data.error = err;
+            eventsChain.isCriticalError = true;
             eventsChain.eventChain.push(data);
-            eventsChain.isCriticalError = handleError(err, eventsChain.isCriticalError)
-            saveError(JSON.stringify(eventsChain.eventChain));
-            eventsChain.attempts++;
-            error(err);
-            //throw new Error(err);
+            warning("Got a fatal error!")
         }
     }
-    saveError(JSON.stringify(eventsChain.eventChain)); //Once the chain finishes append it into debug log
+    if(eventsChain.isCriticalError) saveError(JSON.stringify(eventsChain.eventChain))
+    if(eventsChain.isSuccesful) {
+        saveChain(JSON.stringify(eventsChain.eventChain))
+        //Ejecutar funcion asincrona para disparar las impresiones.
+        //triggerImpressions(eventsChain.XMLChain)
+    };
     return {};
 }
 
-const handleRedirection = (response, headers) => {
-    const redirectUrl = response.headers.get('Location');
-    if (redirectUrl) {
-        buildRequest(redirectUrl, headers)
+
+
+const handleURLAfterResponse = (data, options) => {
+    let url = getVASTTagURI(data);
+    if(!url) {options.isBroken = true}
+    if(url==options.previousURL) {options.isBroken = true}
+    return url;
+}
+
+/**
+ *
+ * 
+ * @param {object} requestHeaders 
+ * @param {Response} response Receives a Response object
+ * @param {String} requestURL 
+ * @returns 
+ */
+const dataToLog = async (requestHeaders, response, requestURL) => {
+    console.log(response.headers)
+    const data = {
+        date: new Date().toISOString(),
+        request:{url:requestURL,
+            headers:requestHeaders,
+        },
+        response : {
+            url: response.url,
+            type: response.type,
+            ok: response.ok,
+            status: response.status,
+            headers: JSON.stringify(response.headers),
+        },
+        error: '',
+        body: await response.text(),
     }
+    return data;
 }
 
-const handleError = (error, flag) => {
-    return flag = isCriticalError(error)
-}
-
-const isCriticalError = (error) => {
-    //TODO: Validar los casos de errores fatales en las peticiones...
-    error(error)
-    return false
-}
-
-const getVASTTagURI = (data) => {
-    const VastTagURI = getVastTag(data.body);
-    if (VastTagURI) {return VastTagURI}
-    else {error("Could not retrieve any valuable data. Trying again . . ."); return data.request.url;}
-}
-
-const buildRequest = (url, options, reqHeaders) => {
-    if(typeof options == 'object' && Object.hasOwn(options,'Cookies')) setCookies(options.Cookies, reqHeaders) 
-    const newRequest = new Request(url, {       
-        headers: reqHeaders,
-    });
-    return newRequest;
-}
-
-const setCookies = (cookies, headers) => {
-    if(typeof headers != 'object'){throw  "invalid type of Headers"}
-    if(typeof cookies != 'string'){throw "Invalid type of cookies"}
-    headers.cookies = cookies
-    return headers;
-}
-
-/*https://s.adtelligent.com/
-?
-width=320
-&height=480
-&cb=1275224511
-&ua=Mozilla%2F5.0%20%28Linux%3B%20Android%208.0.0%3B%20SAMSUNG-SM-G930A%20Build%2FR16NW%3B%20wv%29%20AppleWebKit%2F537.36%20%28KHTML%2C%20like%20Gecko%29%20Version%2F4.0%20Chrome%2F88.0.4324.181%20Mobile%20Safari%2F537.36
-&uip=73.130.87.123
-&app_name=KMTV%20-%20Watch%20K-Pop&app_bundle=com.dmr.kmtv
-&device_model=samsung
-&device_make=Samsung
-&device_category=2
-&app_store_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dcom.dmr.kmtv
-&device_id=698b1596-4239-402b-b934-c4ebb8d99c98
-&vast_version=2
-&aid=831205*/
-
-
-export {getRequest}
+export { getRequest }

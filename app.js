@@ -1,4 +1,4 @@
-import {PORT,} from "./config/index.js";
+import {PORT} from "./config/index.js";
 import express from 'express';
 const app = express();
 import { router } from "./src/routes/index.js"
