@@ -1,12 +1,12 @@
 import XML from "xml-js";
 import { error } from "../middlewares/logger/index.js";
-import { mapImpressionsAndEvents } from "./impressions.utils.js";
+import { getImpressionsAndEvents } from "./impressions.utils.js";
 
 const XML_VAST_AD_TAG = 'VASTAdTagURI';
 
 const SUCCESFUL_TAGS = ['<Inline>','<MediaFiles>']
 
-const COMMON_ERRORS = { //Body content expected when chain finishes...
+const COMMON_ERRORS = { //Body content expected when chain fails...
     serverError : ['There are no ads', 'request was skipped'],
     brokenError : ['<VAST version= "2.0"></VAST>','<!DOCTYPE HTML PUBLIC','504 Service Unavailable'],
     expectedError : ['Campaign request limit exceed',]
@@ -56,17 +56,21 @@ const baseFrom = (url) => {
     const urlObject = new URL(url);
     return urlObject.hostname;
 }
+const isXML = (body) => {
+  const xmlRegex = /<\?xml.*\?>/i;
+  return xmlRegex.test(body);
+};
+
 const addIfXMLResponse = (body, XMLlist) => {
-    if(!String(body).includes('<?xml version=')) return XMLlist;
-    XMLlist.push(String(body))
-    return XMLlist
+  let newXmlList;
+  if (!isXML(body)) return XMLlist;
+  else newXmlList = extractDataFrom(body, XMLlist);
+  return newXmlList;
+};
+
+const extractDataFrom = (xml, chain) => {
+    const jsChain = XML.xml2json(xml, {compact:true})
+    return getImpressionsAndEvents(JSON.parse(jsChain), chain)
 }
 
-const triggerImpressions = (chain) => {
-    const jsChain = XML.xml2json(chain, {compact:true})
-    console.log(jsChain)
-    mapImpressionsAndEvents(jsChain)
-    //FETCH impressions URL and events mapped by impression
-}
-
-export { getVASTTagURI, triggerImpressions, handleBrokenResponse, handleErrorResponse, handleSuccesfulResponse, buildHeaders, baseFrom, addIfXMLResponse };
+export { getVASTTagURI, extractDataFrom , handleBrokenResponse, handleErrorResponse, handleSuccesfulResponse, buildHeaders, baseFrom, addIfXMLResponse };

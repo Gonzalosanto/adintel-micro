@@ -1,26 +1,59 @@
 
 /**
  * 
- * @param {object} chain Object that contains Impressions
+ * @param {object} xml Object that contains Impressions
  * @returns 
  */
-const mapImpressionsAndEvents = (chain) => {
-    const impressions = getImpressions(chain)
-    const eventsByImpression = impressions.map((imp)=>{
-        return {impression : imp, events : getEventsByImpression(chain, imp)}
-    })
-    return eventsByImpression
+const getImpressionsAndEvents = (xml, chain) => {
+    const impressions = getImpressions(xml)
+    const events = getEvents(xml)
+    return {impressions : chain.impressions.concat(impressions), events : chain.events.concat(events)}
 }
 
-const getImpressions = (chain) => {
-    console.log(chain)
+const getImpressions = (xml) => {
+    if(!xml?.VAST?.Ad) throw 'Invalid chain values'
+    const baseTag = xml.VAST.Ad.Wrapper ? xml.VAST.Ad.Wrapper : xml.VAST.Ad.InLine;
+    if(!baseTag?.Impression) throw 'No Impressions found' 
+    let impressions = []
+    for(const elem of baseTag?.Impression) {
+        impressions.push(elem?._cdata);
+    } 
+    return impressions
 }
 /**
  * 
- * @param {object} chain Object that contains a list of impressions and events 
+ * @param {object} xml Object that contains a list of impressions and events 
  */
-const getEventsByImpression = (chain, impression) => {
-    console.log(impression)
+const getEvents = (xml) => {
+    if(!xml?.VAST?.Ad) throw 'Invalid chain values'
+    const baseTag = xml.VAST.Ad.Wrapper ?? xml.VAST.Ad.InLine;
+    const creativesTag = baseTag.Creatives.Creative.Linear
+    if(!baseTag?.Creatives?.Creative) throw 'No Creatives found!' 
+    
+    const extractEvents = (creativesTag) => {
+        if(!creativesTag?.TrackingEvents?.Tracking) throw 'No events found!'
+        return creativesTag.TrackingEvents.Tracking?.map(elem => elem?._cdata) ?? [];
+    }    
+    const extractMediaFiles = (creativesTag) => {
+        return creativesTag.MediaFiles.MediaFile?.map(elem => elem?._cdata) ?? [];
+    }
+    const extractVideoClicks = (creativesTag) => {
+        let videoclick = [];
+        if(!Array.isArray(creativesTag.VideoClicks.ClickThrough)) {
+            videoclick.push(creativesTag.VideoClicks.ClickThrough?._cdata);
+        } else {
+            for (const elem of creativesTag.VideoClicks.ClickThrough) {
+                videoclick.push(elem?._cdata);
+            }
+        }
+        return videoclick;
+    }
+    
+    let events = {events:[], mediafile:[], videoclick:[]}
+    events.events = extractEvents(creativesTag);
+    events.mediafile = creativesTag?.MediaFiles ? extractMediaFiles(creativesTag) : [];
+    events.videoclick = creativesTag?.VideoClicks ? extractVideoClicks(creativesTag) : [];
+    return events;
 }
 
-export {mapImpressionsAndEvents}
+export {getImpressionsAndEvents}

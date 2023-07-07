@@ -91,10 +91,10 @@ const handleURLAfterResponse = (data, options) => {
  * @returns 
  */
 const dataToLog = async (requestHeaders, response, requestURL) => {
-    console.log(response.headers)
     const data = {
         date: new Date().toISOString(),
-        request:{url:requestURL,
+        request:{
+            url:requestURL,
             headers:requestHeaders,
         },
         response : {
