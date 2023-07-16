@@ -38,7 +38,7 @@ const saveError = (data) => {
     writeDataIf(data, logPath);
 }
 const saveChain = (data) => {
-    let logPath = path.join(root, `./public/debug/chains.xml`);
+    let logPath = path.join(root, `./public/logs/chains.xml`);
     writeDataIf(data, logPath);
 }
 

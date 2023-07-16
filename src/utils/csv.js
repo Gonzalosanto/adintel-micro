@@ -45,7 +45,7 @@ const macros = {
 //&device_model=[replace_me]&device_make=[replace_me]&device_category=[replace_me]&app_store_url=[replace_me]
 //&device_id=[replace_me]&vast_version=2&aid=833181 
 
-const processFile = async (filename, delimiter) => {
+export const processFile = async (filename, delimiter) => {
     const records = [];
     const parser = fs.createReadStream(path.join(process.cwd(), filename)).pipe(parse({
         delimiter:delimiter || ',',
@@ -67,7 +67,7 @@ const setMacros = (url, id, keys, data) => {
         entries.push([keys[i],d])
     })
     entries = Object.fromEntries(entries);
-    let urlWithMacros = `${url}/?width=${DIMENSIONS["16:9"].FHD.width}&height=${DIMENSIONS["16:9"].FHD.height}&cb=&ua=${entries.ua}&uip=${entries.uip}&app_name=${entries.app_name}&app_bundle=${entries.app_bundle}&device_model=&device_make=&device_category=${CATEGORY.CTV}&app_store_url=${encodeURIComponent(entries.app_store_url)}&device_id=&vast_version=${VAST_VERSION[2]}&aid=${id}`;
+    let urlWithMacros = `${url}/?width=${DIMENSIONS["16:9"].FHD.width}&height=${DIMENSIONS["16:9"].FHD.height}&cb=&ua=${entries.ua}&uip=${entries.uip}&app_name=${entries.app_name}&app_bundle=${entries.app_bundle}&device_model=&device_make=&device_category=${CATEGORY.CTV}&app_store_url=${encodeURIComponent(entries.app_store_url)}&device_id=${entries.device_id || ''}&vast_version=${VAST_VERSION[2]}&aid=${id}`;
     try {return urlWithMacros.toString();}
     catch (err) {error('Error processing macros:', err);return null;}
 }
@@ -81,7 +81,8 @@ export const processData = (baseUrl, id, data) => {
     return urls;
 }
 
+//BASE URL and AID are data that comes from POST request or GET request from CORE Backend
 export const getURLsWithMacros = async (url, id, filename) => {
-    const fileContent = await processFile('./docs/csv.txt', ',')
+    const fileContent = await processFile(filename, ',')
     return processData(BASE_URL, AID, fileContent)
 }

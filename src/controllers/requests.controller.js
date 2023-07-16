@@ -2,6 +2,7 @@ import { saveDebug, saveError, saveChain, saveResponse } from "../DAOs/fs/index.
 import { info,error, warning, debug } from '../middlewares/logger/index.js';
 import { getVASTTagURI,handleBrokenResponse, handleErrorResponse, handleSuccesfulResponse, buildHeaders, baseFrom, addIfXMLResponse } from "../utils/http.js";
 import fetch from "node-fetch";
+import { trigger } from "../utils/impressions.utils.js";
 
 //Chaining requests, async function to get a chain
 const getRequest = async (req,res,adserver) => {
@@ -28,7 +29,7 @@ const getRequest = async (req,res,adserver) => {
     let cookies = [];
     let eventsChain = {
         eventChain : [],
-        XMLChain : [],
+        XMLChain : {impressions:[], events:[]},
         previousURL:url,
         isSuccesful: false,
         isBroken: false,
@@ -36,7 +37,7 @@ const getRequest = async (req,res,adserver) => {
         isCommonError: false,
     }
     let data = {};
-    while (!eventsChain.isSuccesful && (!eventsChain.isBroken && !eventsChain.isCriticalError) && retries <= 5){
+    while ((!eventsChain.isBroken && !eventsChain.isCriticalError) && retries <= 5){
         try {
             let options = {
                 redirect:'follow',
@@ -49,7 +50,7 @@ const getRequest = async (req,res,adserver) => {
             eventsChain.eventChain.push(data);
             if(response.status == 200){
                 options.headers['Cookies'] = cookies
-                eventsChain.XMLChain = addIfXMLResponse(response.body, eventsChain.XMLChain)
+                eventsChain.XMLChain = addIfXMLResponse(data.body, eventsChain.XMLChain)
                 eventsChain.isBroken = handleBrokenResponse(data.body);
                 eventsChain.isCommonError = handleErrorResponse(data.body);
                 eventsChain.isSuccesful = handleSuccesfulResponse(data.body);
@@ -59,21 +60,18 @@ const getRequest = async (req,res,adserver) => {
         } catch (err) {
             retries++;
             data.error = err;
+            error(err)
             eventsChain.isCriticalError = true;
             eventsChain.eventChain.push(data);
-            warning("Got a fatal error!")
         }
     }
-    if(eventsChain.isCriticalError) saveError(JSON.stringify(eventsChain.eventChain))
     if(eventsChain.isSuccesful) {
+        const res = await trigger(eventsChain.XMLChain)
+        eventsChain.eventChain.push(JSON.stringify(res))
         saveChain(JSON.stringify(eventsChain.eventChain))
-        //Ejecutar funcion asincrona para disparar las impresiones.
-        //triggerImpressions(eventsChain.XMLChain)
     };
     return {};
 }
-
-
 
 const handleURLAfterResponse = (data, options) => {
     let url = getVASTTagURI(data);
