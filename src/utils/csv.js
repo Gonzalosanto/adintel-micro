@@ -39,10 +39,18 @@ const macros = {
     vast_version: VAST_VERSION[4],
 }
 
+const OS = {
+    key : 'value'
+}
+
 //este es la URL con el orden adecuado de las macros: 
 //http://s.adtelligent.com/?width=[replace_me]&height=[replace_me]
-//&cb=[replace_me]&ua=[replace_me]&uip=[replace_me]&app_name=[replace_me]&app_bundle=[replace_me]
-//&device_model=[replace_me]&device_make=[replace_me]&device_category=[replace_me]&app_store_url=[replace_me]
+//&cb=[replace_me] //Get from first response
+//&ua=[replace_me]&uip=[replace_me]&app_name=[replace_me]&app_bundle=[replace_me]
+//&device_model=[replace_me]
+//&device_make=[replace_me] // OS set by association with store_url
+//&device_category=[replace_me]
+//&app_store_url=[replace_me]
 //&device_id=[replace_me]&vast_version=2&aid=833181 
 
 export const processFile = async (filename, delimiter) => {
@@ -67,14 +75,14 @@ const setMacros = (url, id, keys, data) => {
         entries.push([keys[i],d])
     })
     entries = Object.fromEntries(entries);
-    let urlWithMacros = `${url}/?width=${DIMENSIONS["16:9"].FHD.width}&height=${DIMENSIONS["16:9"].FHD.height}&cb=&ua=${entries.ua}&uip=${entries.uip}&app_name=${entries.app_name}&app_bundle=${entries.app_bundle}&device_model=&device_make=&device_category=${CATEGORY.CTV}&app_store_url=${encodeURIComponent(entries.app_store_url)}&device_id=${entries.device_id || ''}&vast_version=${VAST_VERSION[2]}&aid=${id}`;
+    let urlWithMacros = `${url}/?width=${DIMENSIONS["16:9"].FHD.width}&height=${DIMENSIONS["16:9"].FHD.height}&cb=&ua=${entries.ua}&uip=${entries.uip}&app_name=${entries.app_name}&app_bundle=${entries.app_bundle}&device_model=&device_make=&device_category=${CATEGORY.CTV}&app_store_url=${encodeURIComponent(entries.app_store_url)}&device_id=${entries.device_id || ''}&vast_version=${VAST_VERSION[2]}&aid=${process.env.AID || id}`;
     try {return urlWithMacros.toString();}
     catch (err) {error('Error processing macros:', err);return null;}
 }
 // Es temporal, se supone que los datos llegan en el request del core-service
 export const processData = (baseUrl, id, data) => {
     const urls = [];
-    const keys = data[0] //el indice 0 solo tiene las keys del CSV, el resto son valores
+    const keys = data[0]
     for (let i = 1; i < data.length; i++) {
         urls.push(setMacros(baseUrl, id, keys, data[i]))
     }
@@ -82,7 +90,7 @@ export const processData = (baseUrl, id, data) => {
 }
 
 //BASE URL and AID are data that comes from POST request or GET request from CORE Backend
-export const getURLsWithMacros = async (url, id, filename) => {
-    const fileContent = await processFile(filename, ',')
+export const getURLsWithMacros = async (url, id, filename, delimiter) => {
+    const fileContent = await processFile(filename, delimiter)
     return processData(BASE_URL, AID, fileContent)
 }

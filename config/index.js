@@ -1,4 +1,6 @@
-const PORT = 8080;
+import 'dotenv/config';
+
+const PORT = process.env.PORT || 8080;
 const macros = {
     width : 1920,
     height : 1080,

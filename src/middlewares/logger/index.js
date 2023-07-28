@@ -1,5 +1,5 @@
 export const error = (e) => {
-    console.error(`\x1b[31mError: ${e}\x1b[0m`);
+    console.error(`\x1b[31m${e}\x1b[0m`);
 }
 
 export const warning = (w) => {

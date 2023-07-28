@@ -14,26 +14,17 @@ const getImpressionsAndEvents = (xml, chain) => {
         events : chain.events.concat(events)
     }
 }
-
 const getImpressions = (xml) => {
     const VAST = xml?.VAST?.Ad ?? null;
-    if(!VAST) return null;
-    let baseTag;
-    if (xml?.VAST?.Ad?.hasOwnProperty('Wrapper')) { baseTag = VAST.Wrapper }
-    else if(xml?.VAST?.Ad?.hasOwnProperty('InLine')){ baseTag = VAST.InLine}
-    else {return null}
+    if(!VAST) return [];
+    const baseTag = VAST.Wrapper || VAST.InLine;
+    if (!baseTag) return null;
     if(!baseTag?.Impression) return null;
     const impressionsXML = baseTag?.Impression
-    let impressions = []
-    if(!Array.isArray(impressionsXML)){impressions.push(impressionsXML?._cdata)}
-    else {
-        for (let i = 0; i < impressionsXML.length; i++) {
-            const impression = impressionsXML[i];
-            if(typeof impression == 'object'){
-                if(impression['_cdata']) impressions.push(impression['_cdata'])
-            }
-        }
-    }
+    const impressions = []
+    impressions.push(Array.isArray(impressionsXML)
+    ? impressionsXML.map((impression) => {return impression?._cdata})
+    : [impressionsXML?._cdata])
     return impressions
 }
 /**
@@ -60,8 +51,15 @@ const getEvents = (xml) => {
             return extractEventByAttribute(elem)
         }) ?? [];
     }
-    const extractMediaFiles = (creativesTag) => {
-        return creativesTag.MediaFiles.MediaFile?.map(elem => elem?._cdata);
+    const extractMediaFiles = (creativesTag) => { //FIX: Bug when some mediafiles are not array
+        if(creativesTag?.MediaFiles?.MediaFile && Array.isArray(creativesTag?.MediaFiles?.MediaFile)) {
+            return creativesTag?.MediaFiles?.MediaFile?.map(elem => elem?._cdata);
+        }
+        else {
+            log(creativesTag?.MediaFiles?.MediaFile)
+            return creativesTag?.MediaFiles.MediaFile
+        }
+        
     }
     const extractVideoClicks = (creativesTag) => {
         let videoclick = [];
@@ -98,69 +96,73 @@ const trigger = async (chain) => {
     return res;
 }
 const triggerImpressions = async(impressions)=>{
-    let results = [];
-    for (let i = 0; i < impressions.length; i++) {
-        //Trigger request function
-        results.push( await requestTrigger(impressions[i]))
-    }
+    const results = await Promise.all(
+        impressions.map(async (impression) => {
+          return await requestTrigger(impression);
+        })
+      );
     return results;
 }
-const triggerEvents= async (events) => {
+const triggerEvents= async (events) => { //TODO: Handle pixels from final response in chain as first source to request by tag (creativeView,Start ...)
     const formatEvents = (events) => {
-        let creativeView = [] 
-        let start = []
-        let midpoint = []
-        let firstQuartile = []
-        let thirdQuartile = []
-        let complete = []
-        let video = []
-        let mediafile = []
-        for (let j = 0; j < events.length; j++) {
-            const evt = events[j].events
-            video.push(events[j].videoclick ?? '')
-            mediafile.push(events[j].mediafile)
-            creativeView.push(evt.filter(e=>e.creativeView))
-            start.push(evt.filter(e=>e.start))            
-            firstQuartile.push(evt.filter(e=>e.firstQuartile))
-            midpoint.push(evt.filter(e=>e.midpoint))
-            thirdQuartile.push(evt.filter(e=>e.thirdQuartile))
-            complete.push(evt.filter(e=>e.complete))
-        }
-        return {creativeView, start, firstQuartile, midpoint, thirdQuartile, complete, video, mediafile}
+        const eventTypes = [
+            "creativeView",
+            "start",
+            "midpoint",
+            "firstQuartile",
+            "thirdQuartile",
+            "complete",
+        ];
+        const results = {
+            video: [],
+            mediafile: [],
+        };
+        eventTypes.forEach((eventType) => {
+            results[eventType] = events.flatMap((event) =>
+              event.events
+                .filter((e) => e.hasOwnProperty(eventType))
+                .map((e) => e[eventType])
+            );
+          });
+        return results;
+        // let creativeView = [] 
+        // let start = []
+        // let midpoint = []
+        // let firstQuartile = []
+        // let thirdQuartile = []
+        // let complete = []
+        // let video = []
+        // let mediafile = []
+        // for (let j = 0; j < events.length; j++) {
+        //     const evt = events[j].events
+        //     video.push(events[j].videoclick ?? '')
+        //     mediafile.push(events[j].mediafile)
+        //     creativeView.push(evt.filter(e=>e.creativeView))
+        //     start.push(evt.filter(e=>e.start))            
+        //     firstQuartile.push(evt.filter(e=>e.firstQuartile))
+        //     midpoint.push(evt.filter(e=>e.midpoint))
+        //     thirdQuartile.push(evt.filter(e=>e.thirdQuartile))
+        //     complete.push(evt.filter(e=>e.complete))
+        // }
+        // return {creativeView, start, firstQuartile, midpoint, thirdQuartile, complete, video, mediafile}
     }
-    let results = []
-    const evts = formatEvents(events)
-    const ks = Object.keys(evts);
-    let eventsToTrigger = {};
-    for (let i = 0; i < ks.length; i++) {
-        const key = ks[i];     
-        evts[key].flat().map(e => {
-            if(key == 'mediafile' || key == 'video'){
-                if(e){
-                    if(!eventsToTrigger[key]) eventsToTrigger[key] = [e]
-                    else eventsToTrigger[key].push(e)
-                }                
-            } else {
-                if(!eventsToTrigger[key]) eventsToTrigger[key] = [e[key]]
-                else eventsToTrigger[key].push(e[key])
-            }
-        })
-    }
+    const eventsToTrigger = formatEvents(events)
+    const ks = Object.keys(eventsToTrigger);
+    const promises = [];
     for (let j = 0; j < ks.length; j++) {
-        for (let x = 0; x < eventsToTrigger[ks[j]].length; x++) {
-            const evt = eventsToTrigger[ks[j]];
-            //Trigger request function
-            results.push(await requestTrigger(evt))
+        const evt = eventsToTrigger[ks[j]];
+        for (const e of evt) {
+            promises.push(requestTrigger(e[0]));
         }
     }
-    return results
+    return Promise.all(promises);
 }
-
 const requestTrigger = async (url) => {
+    const controller = new AbortController()
+    const timeout = setTimeout(()=>controller.abort(), 10000);
     try {
-        const response = await fetch(url);
+        const response = await fetch(url, {signal: controller.signal});
         if (!response.ok) {
-            error(`${JSON.stringify(response)}`)
             error(`HTTP error! URL: ${response.url} Status: ${response.status}`);
         }
         const res = {
@@ -168,10 +170,11 @@ const requestTrigger = async (url) => {
             status: response.status,
             headers: response.headers
         }
+        clearTimeout(timeout)
         return res;
       } catch (err) {
-        log(err)
         error(`REQUEST TRIGGER FAILED! -> ${err}`)
+        clearTimeout(timeout)
     }
 }
 

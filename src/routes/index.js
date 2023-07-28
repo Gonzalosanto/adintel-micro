@@ -1,12 +1,12 @@
 import { Router } from "express";
 import path from 'path'
 import { abort, start } from "./requests/index.js";
-import { processFile } from "../utils/csv.js";
+import { getURLsWithMacros, processFile } from "../utils/csv.js";
 import { getUsageStats } from "../utils/usage.js";
 
 export const router = Router();
 
-router.get('/start', (req,res, next) => {
+router.get('/start', async(req,res, next) => {
     try {
         start(req,res, next);
         res.status(200).send("Process has been launched...");
@@ -17,14 +17,16 @@ router.get('/start', (req,res, next) => {
 
 router.get('/stats', (req,res,next) => getUsageStats(req,res,next));
 
-// router.get('/test', (req,res, next) => {
-//     try {
-//         test(req,res, next);
-//         res.status(200).send("Process is being tested...");
-//     } catch (error) {
-//         res.status(500)
-//     }
-// });
+router.get('/test', async (req,res, next) => {
+    try {
+        const test = async () => {
+            return getURLsWithMacros('', '', './docs/bigList.csv', ';');
+        }
+        res.status(200).send(await test());
+    } catch (error) {
+        res.status(500).send(error)
+    }
+});
 
 router.get('/parse', async (req,res,next)=>{
     try {
@@ -35,7 +37,7 @@ router.get('/parse', async (req,res,next)=>{
         res.send("Error while parsing file...")
     }
 })
-router.get('/abort', (req,res, next) => {
+router.get('/abort', async(req,res, next) => {
     res.status(200).send("Killing process...")
     abort(req,res,next)
 })
