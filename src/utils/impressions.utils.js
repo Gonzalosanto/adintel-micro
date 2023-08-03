@@ -103,7 +103,7 @@ const triggerImpressions = async(impressions)=>{
       );
     return results;
 }
-const triggerEvents= async (events) => { //TODO: Handle pixels from final response in chain as first source to request by tag (creativeView,Start ...)
+const triggerEvents= async (events) => {
     const formatEvents = (events) => {
         const eventTypes = [
             "creativeView",

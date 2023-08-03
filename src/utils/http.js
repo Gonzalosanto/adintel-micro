@@ -32,7 +32,7 @@ const getVastTag = (data) => {
 const getVASTTagURI = (data) => {
     return getVastTag(data) ?? null;
 }
-//-------------------HTTP-RESPONSES-HANDLERS------------------------
+//-------------------HTTP-RESPONSE-HANDLERS------------------------
 const handleBrokenResponse = (body) => {
     return COMMON_ERRORS.brokenError.some(e => String(body).includes(e));
 }
