@@ -40,7 +40,6 @@ const getRequest = async (req,res,urlWithMacros) => {
     }
     let data = {};
     while ((!eventsChain.isBroken && !eventsChain.isCriticalError) && retries <= 5){
-        //We have an issue here... If chain is succesful there is no way for while loop to check if it's succesfull
         try {
             let options = {
                 redirect:'follow',
@@ -54,8 +53,9 @@ const getRequest = async (req,res,urlWithMacros) => {
             eventsChain.eventChain.push(data);
             if(response.status == 200){
                 options.headers['Cookies'] = cookies
-                eventsChain.XMLChain = addIfXMLResponse(data.body, eventsChain.XMLChain)
-                eventsChain = handleResponse(data.body, eventsChain)
+                eventsChain.XMLChain = addIfXMLResponse(data.body, eventsChain.XMLChain);
+                eventsChain = handleResponse(data.body, eventsChain);
+                // console.log(data.body)
                 url = handleURLAfterResponse(data.body, eventsChain);
             }
             retries++;

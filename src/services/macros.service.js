@@ -22,8 +22,7 @@ export const GetMacros = async (skip, limit) => {
 }
 
 export const GetMacrosLength = async () => {
-    const macros = await (await collection).find().toArray()
-    return macros.length
+    return (await collection).countDocuments()
 }
 
 export const UpdateMacro = async (id, data) => {

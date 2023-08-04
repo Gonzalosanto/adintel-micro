@@ -9,20 +9,21 @@ export const runRequestsConcurrently = async (concurrency, hours) => {
     const promises = [];
     let index = 0;
     let begin = 0;
-    const limit = 500;
+    const limit = Number.parseInt(concurrency);
     const length = await GetMacrosLength();
     let urls;
     while ((Date.now() - startTime) < (hours * HOUR)) {
         try {
             urls = await urlsToRequest(begin, limit)
-            console.log(begin)
-            if(index == length) {begin = 0; index=0;}
-            for (let i = 0; promises.length < concurrency && index < urls.length; i++) {
-                promises.push(getRequest('','',urls[index]))
+            if(index >= length) {
+                begin = 0; index=0;
             }
+            for (let i = 0; promises.length < concurrency && index < length; i++) {
+                promises.push(getRequest('','',urls[i]))
+            }
+            await Promise.all(promises);
             index+=urls.length;
             begin += limit;
-            await Promise.all(promises);
             promises.length = 0;
         } catch (error) {
             console.log("Process exited with error code: F")

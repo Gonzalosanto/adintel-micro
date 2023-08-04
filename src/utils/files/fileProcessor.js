@@ -2,7 +2,7 @@ import fs from "fs"
 import path from "path";
 import { parse } from 'csv-parse';
 import { macros } from './config.js'
-import { Insert } from '../../services/macros.service.js'
+import { InsertManyMacros } from '../../services/macros.service.js'
 
 const Keys = ['app_bundle','app_name','app_store_url','device_id','ua','uip']
 /**
@@ -11,17 +11,16 @@ const Keys = ['app_bundle','app_name','app_store_url','device_id','ua','uip']
  * @param {String} id 
  * @param {Array<String>} keys 
  * @param {Array<String>} data 
- * @returns a String that represents an URI with macros keys and respectives values.
+ * @returns an object that contains as keys the macros tags and respectives values from file data.
  */
-const setMacros = (url, id, keys, data) => {
-    let entries = []    
+const setMacros = (keys, data) => {
+    let entries = []
     if (typeof data !== 'object' || typeof keys !== 'object') {
         throw new Error('Invalid input parameters');
     }
     Object.values(data).forEach((d,i) =>{entries.push([keys[i],d])})
     entries = Object.fromEntries(entries);
     const dataToSave = {
-        baseUrl: process.env.BASE_URL,
         height: macros.height,
         width: macros.width,
         ...entries
@@ -38,13 +37,24 @@ const setMacros = (url, id, keys, data) => {
  * @param {Array<String>} data 
  * @returns an array of String that represents a list of urls with set VAST TAG macros.
  */
-export const processData = async (baseUrl, id, data) => {
-    const urls = [];
-    for (let i = 0; i < data.length; i++) {
-        await Insert(setMacros(baseUrl, id, Keys, data[i]))
-        //urls.push(result.url)
+export const processData = async (data) => {
+    try {
+        let macros = []
+        let index = 0;
+        while(index < data.length){
+            for (let i = index; i < 1000 + index; i++) {
+                if(data[i]){
+                    macros.push(setMacros(Keys, data[i]))
+                    index++;
+                }                
+            }
+            await InsertManyMacros(macros)
+            macros.length = 0
+        }  
+    } catch (error) {
+        console.log(error)
     }
-    return []; 
+    
 }
 
 /**
@@ -54,9 +64,6 @@ export const processData = async (baseUrl, id, data) => {
  * @returns An Array where each row represents all the macros used to build final URI
  */
 export const processFile = async (filename, delimiter) => {
-    const processRecords = async (d) => {
-            return processData(null, null, d)
-    }
     const records = [];
     const parser = fs.createReadStream(path.join(process.cwd(), filename)).pipe(
         parse({
@@ -67,13 +74,12 @@ export const processFile = async (filename, delimiter) => {
     );
     for await (const record of parser){
         if(records.length == 5000){
-            processRecords(records);
+            processData(records);
             records.length = 0;
         }
         records.push(record)
     }
-    processRecords(records);
-    return records;
+    return processData(records);
 }
 
 //SEPARATE LOGIC, FILE PROCESSING 'n URL building 
