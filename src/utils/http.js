@@ -75,5 +75,15 @@ const extractDataFrom = (xml, chain) => {
     const jsChain = XML.xml2js(xml, {compact:true})
     return getImpressionsAndEvents(jsChain, chain)
 }
+//-------------URL-----------------------
+const isValidURL = (string) => {
+    let url;  
+    try {
+      url = new URL(string);
+      return url.protocol && url.hostname && url.href
+    } catch (err) {
+        return false;
+    }
+}
 
-export { getVASTTagURI, extractDataFrom , handleBrokenResponse, handleErrorResponse, handleCommonResponse, handleSuccesfulResponse, buildHeaders, baseFrom, addIfXMLResponse };
+export { getVASTTagURI, isValidURL, extractDataFrom , handleBrokenResponse, handleErrorResponse, handleCommonResponse, handleSuccesfulResponse, buildHeaders, baseFrom, addIfXMLResponse };
