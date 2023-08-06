@@ -1,38 +1,20 @@
 import { MongoClient } from "mongodb";
+import { error } from "../../middlewares/logger/index.js";
+const MONGO_OPTIONS = {}
+let conn
+const pool = new MongoClient(process.env.MONGO_URL,{ ...MONGO_OPTIONS, useNewUrlParser: true, useUnifiedTopology: true});
 
-export class MongoDBConnection {
-  constructor(uri, options) {
-    this.uri = uri;
-    this.MONGO_OPTIONS = options;
-    this.pool = null;
+export const connect = async () => {
+  if(conn){return conn}
+  try {
+    conn = await pool.connect()
+    return conn;
+  } catch (err) {
+    error(`Failed to connect to MongoDB: ${err}`);
+    return { message: `Failed to connect to MongoDB: ${err}` }
   }
+}
 
-  async connect(db_name) {
-    try {
-      if (!this.pool) {
-        this.pool = new MongoClient(this.uri,{ ...this.MONGO_OPTIONS, useNewUrlParser: true, useUnifiedTopology: true});
-        await this.pool.connect();
-      }
-      if (this.pool) {
-        return this.pool.db(db_name);
-      }
-      throw new Error(`Failed to connect to MongoDB`);
-    } catch (err) {
-      throw new Error(`Failed to connect to MongoDB: ${err}`);
-    }
-  }
-
-  async disconnect() {
-    try {
-      if (this.pool && this.pool.isConnected()) {
-        await this.pool.close();
-      }
-    } catch (err) {
-      throw new Error(`Failed to disconnect from MongoDB: ${err}`);
-    }
-  }
-
-  getPool() {
-    return this.pool;
-  }
+export const disconnect = async () => {
+  return pool.close();
 }
