@@ -31,10 +31,11 @@ import { trigger } from "../utils/impressions.utils.js";
 // }
 
 const getRequest = async (urlWithMacros) => {
+    const controller = new AbortController()
     let url = setCachebuster(urlWithMacros);
     const params = new URL(url).searchParams;
     const reqHeaders = setRequestHeaders(params);
-    const timeout = abortHandler(5000)
+    const timeout = abortHandler(5000, controller)
     let retries = 0;
     let cookies = [];
     let eventsChain = {
@@ -59,7 +60,8 @@ const getRequest = async (urlWithMacros) => {
             eventsChain.previousURL = url
             eventsChain.eventChain.push(data);
             if(response.status == 200){
-                url = chainRequest(response, eventsChain, cookies);
+                options.headers['Cookies'] = cookies
+                url = chainRequest(response, eventsChain);
             } else { 
                 break;
              }
@@ -75,15 +77,13 @@ const getRequest = async (urlWithMacros) => {
     return eventsChain
 }
 
-const chainRequest = (response, eventsChain, cookies) => {
-    options.headers['Cookies'] = cookies;
+const chainRequest = (response, eventsChain) => {
     eventsChain.XMLChain = addIfXMLResponse(response, eventsChain.XMLChain);
     eventsChain = handleResponse(response, eventsChain);
     return handleURLAfterResponse(response, eventsChain);
 }
 
-const abortHandler = (timeoutMs)=>{    
-    const controller = new AbortController()
+const abortHandler = (timeoutMs, controller)=>{    
     const timeout = setTimeout(()=>controller.abort(), timeoutMs);
     return timeout;
 }
