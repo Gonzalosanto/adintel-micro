@@ -1,34 +1,34 @@
-import { MongoDBConnection } from '../DAOs/mongodb/MongoClient.js'
+import { connect } from '../DAOs/mongodb/MongoClient.js'
+const db = process.env.MONGO_DB_NAME
 const coll = 'macros'
-const MONGO_OPTIONS = {}
-const connectTo = async (collection) => {
-    const clientInstance = new MongoDBConnection(process.env.MONGO_DB, MONGO_OPTIONS ||  process.env.MONGO_OPTIONS)
-    const connection = await clientInstance.connect(process.env.MONGO_DB_NAME)
+const connectTo = async (collection, db) => {
+    const client = await connect();    
+    const connection = client.db(db);
     return connection.collection(collection)
 }
 
-const collection = connectTo(coll)
+const collection = await connectTo(coll, db)
 
 export const InsertMacro = async (data) => {
-    return (await collection).insertOne(data)
+    return collection.insertOne(data)
 }
 
 export const InsertManyMacros = async (data) => {
-    return (await collection).insertMany(data)
+    return collection.insertMany(data)
 }
 
 export const GetMacros = async (skip, limit) => {
-    return (await collection).find().skip(skip).limit(limit).toArray()
+    return collection.find().skip(skip).limit(limit).toArray()
 }
 
 export const GetMacrosLength = async () => {
-    return (await collection).countDocuments()
+    return collection.countDocuments()
 }
 
 export const UpdateMacro = async (id, data) => {
-    return (await collection).updateOne(id, data)
+    return collection.updateOne(id, data)
 }
 
 export const DeleteMacro = async (id) => {
-    return (await collection).deleteOne(id)
+    return collection.deleteOne(id)
 }
