@@ -32,10 +32,15 @@ import { trigger } from "../utils/impressions.utils.js";
 
 const getRequest = async (urlWithMacros) => {
     const controller = new AbortController()
+    const abortHandler = (timeoutMs)=>{    
+        const timeout = setTimeout(()=>{
+            console.log("TIMEDOUT")
+            return controller.abort()}, timeoutMs);
+        return timeout;
+    }
     let url = setCachebuster(urlWithMacros);
     const params = new URL(url).searchParams;
     const reqHeaders = setRequestHeaders(params);
-    const timeout = abortHandler(5000, controller)
     let retries = 0;
     let cookies = [];
     let eventsChain = {
@@ -52,25 +57,24 @@ const getRequest = async (urlWithMacros) => {
             let options = {
                 redirect:'follow',
                 headers: reqHeaders,
-                signal : controller.signal,
             }
             const response = await fetch(url, options);
-            cookies = response.headers.get('Set-Cookie')?.split(';')[0] || '';
-            const data = await dataToLog(reqHeaders, response, url);
-            eventsChain.previousURL = url
-            eventsChain.eventChain.push(data);
+            if(response.status >= 400){
+                console.log("Breaking loop")
+                handleErrorResponse(response.body);
+                break;
+            }
             if(response.status == 200){
                 options.headers['Cookies'] = cookies
                 url = chainRequest(response, eventsChain);
-            } else { 
-                break;
-             }
+            }
+            cookies = response.headers.get('Set-Cookie')?.split(';')[0] || '';
+            const data = await dataToLog(reqHeaders, response, url);
+            eventsChain.previousURL = url
+            eventsChain.eventChain.push(data);            
             retries++;
-            clearTimeout(timeout)
         } catch (err) {
-            error(`${new Date().toISOString()} => ${err}`)
-            eventsChain.isCriticalError = true;
-            clearTimeout(timeout)
+            error(`${new Date().toISOString()} => ${err}`)     
         }
     }
     if(eventsChain.isSuccesful) {eventsChain = await handleSuccesfulChain(eventsChain)};
@@ -81,11 +85,6 @@ const chainRequest = (response, eventsChain) => {
     eventsChain.XMLChain = addIfXMLResponse(response, eventsChain.XMLChain);
     eventsChain = handleResponse(response, eventsChain);
     return handleURLAfterResponse(response, eventsChain);
-}
-
-const abortHandler = (timeoutMs, controller)=>{    
-    const timeout = setTimeout(()=>controller.abort(), timeoutMs);
-    return timeout;
 }
 
 const setRequestHeaders = (searchParams) => {
