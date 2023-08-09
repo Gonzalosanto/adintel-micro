@@ -25,12 +25,9 @@ export const runRequestsConcurrently = async (concurrency, hours) => {
     try {
         while ((Date.now() - startTime) < (hours * HOUR)) {
             urls = await urlsToRequest(begin, limit);
-            if (index >= length) {
-                begin = 0;
-                index = 0;
-            }
+            if (index >= length) {begin = 0;index = 0;}
             const promises = [];
-            for (let i = 0; promises.length < concurrency && index < length; i++) {
+            for (let i = 0; promises.length < urls.length && promises.length < concurrency && index < length; i++) {
                 if (isValidURL(urls[i])) promises.push(getRequest(urls[i]));
             }
             await handlePromises(promises);
