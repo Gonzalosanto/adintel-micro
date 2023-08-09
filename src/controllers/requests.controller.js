@@ -1,43 +1,9 @@
-import { info,error, warning, debug, log } from '../middlewares/logger/index.js';
+import { info, error, warning, debug, log } from '../middlewares/logger/index.js';
 import { getVASTTagURI,handleBrokenResponse, handleErrorResponse, handleSuccesfulResponse, addIfXMLResponse } from "../utils/http.js";
 import fetch from "node-fetch";
 import { trigger } from "../utils/impressions.utils.js";
 
-//SET state machine to handle every request state during loop life cycle
-// const stateMachine = {
-//     initial: 'start',
-//     states: {
-//         start: {
-//             on: {
-//                 RESPONSE_200: 'success',
-//                 RESPONSE_ERROR: 'error',
-//                 RESPONSE_BROKEN: 'broken',
-//                 RESPONSE_CRITICAL_ERROR: 'criticalError'
-//             }
-//         },
-//         success: {
-//             onEntry: 'handleSuccess'
-//         },
-//         error: {
-//             onEntry: 'handleError'
-//         },
-//         broken: {
-//             onEntry: 'handleBroken'
-//         },
-//         criticalError: {
-//             onEntry: 'handleCriticalError'
-//         }
-//     }
-// }
-
 const getRequest = async (urlWithMacros) => {
-    const controller = new AbortController()
-    const abortHandler = (timeoutMs)=>{    
-        const timeout = setTimeout(()=>{
-            console.log("TIMEDOUT")
-            return controller.abort()}, timeoutMs);
-        return timeout;
-    }
     let url = setCachebuster(urlWithMacros);
     const params = new URL(url).searchParams;
     const reqHeaders = setRequestHeaders(params);
@@ -60,7 +26,6 @@ const getRequest = async (urlWithMacros) => {
             }
             const response = await fetch(url, options);
             if(response.status >= 400){
-                console.log("Breaking loop")
                 handleErrorResponse(response.body);
                 break;
             }
@@ -74,7 +39,8 @@ const getRequest = async (urlWithMacros) => {
             eventsChain.eventChain.push(data);            
             retries++;
         } catch (err) {
-            error(`${new Date().toISOString()} => ${err}`)     
+            if(err.name == 'AbortError') error(`${new Date().toISOString()} => ${err}`)
+            else error(`${err.name}: ${err.message}`)
         }
     }
     if(eventsChain.isSuccesful) {eventsChain = await handleSuccesfulChain(eventsChain)};
@@ -126,7 +92,7 @@ const handleURLAfterResponse = (data, options) => {
 const handleSuccesfulChain = async (chain) => {
     const res = await trigger(chain.XMLChain)
     chain.eventChain.push(JSON.stringify(res))
-    console.log(`${new Date().toISOString()} --- Cadena Exitosa`)
+    log(`${new Date().toISOString()} --- Cadena Exitosa`)
     return chain
 }
 
