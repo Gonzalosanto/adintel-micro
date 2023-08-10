@@ -18,11 +18,9 @@ const setMacros = (keys, data) => {
     if (typeof data !== 'object' || typeof keys !== 'object') {
         throw new Error('Invalid input parameters');
     }
-    Object.values(data).forEach((d,i) =>{entries.push([keys[i],d])})
+    Object.values(data).forEach((d,i) =>{if (keys[i]) entries.push([keys[i],d])})
     entries = Object.fromEntries(entries);
     const dataToSave = {
-        height: macros.height,
-        width: macros.width,
         ...entries
     }
     try {
@@ -81,5 +79,3 @@ export const processFile = async (filename, delimiter) => {
     }
     return processData(records);
 }
-
-//SEPARATE LOGIC, FILE PROCESSING 'n URL building 
