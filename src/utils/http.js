@@ -32,7 +32,7 @@ const getVastTag = (data) => {
 const getVASTTagURI = (data) => {
     return getVastTag(data) ?? null;
 }
-//-------------------HTTP-RESPONSES-HANDLERS------------------------
+//-------------------HTTP-RESPONSE-HANDLERS------------------------
 const handleBrokenResponse = (body) => {
     return COMMON_ERRORS.brokenError.some(e => String(body).includes(e));
 }
@@ -75,5 +75,15 @@ const extractDataFrom = (xml, chain) => {
     const jsChain = XML.xml2js(xml, {compact:true})
     return getImpressionsAndEvents(jsChain, chain)
 }
+//-------------URL-----------------------
+const isValidURL = (string) => {
+    let url;  
+    try {
+      url = new URL(string);
+      return url.protocol && url.hostname && url.href
+    } catch (err) {
+        return false;
+    }
+}
 
-export { getVASTTagURI, extractDataFrom , handleBrokenResponse, handleErrorResponse, handleCommonResponse, handleSuccesfulResponse, buildHeaders, baseFrom, addIfXMLResponse };
+export { getVASTTagURI, isValidURL, extractDataFrom , handleBrokenResponse, handleErrorResponse, handleCommonResponse, handleSuccesfulResponse, buildHeaders, baseFrom, addIfXMLResponse };

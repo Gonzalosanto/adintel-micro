@@ -1,26 +1,42 @@
 import { getRequest } from "./requests.controller.js";
+import { GetMacrosLength } from '../services/macros.service.js'
+import { urlsToRequest } from '../utils/builder.utils.js'
+import { isValidURL } from "../utils/http.js";
+import { error, log } from "../middlewares/logger/index.js";
 
-const MINUTE = 60 * 1000;
-const HOURS = (12*60);
+const HOUR = 60 * 60 * 1000;
 
-export const runRequestsConcurrently = async (urls, concurrency, hours) => {
+export const runRequestsConcurrently = async (concurrency, hours) => {
     let startTime = Date.now();
-    const promises = [];
     let index = 0;
+    let begin = 0;
+    const limit = Number.parseInt(concurrency);
+    const length = await GetMacrosLength();
+    let urls;
 
-    while ((Date.now() - startTime) < ((hours * 60)* MINUTE)) {
+    const handlePromises = async (promises) => {
         try {
-            if(urls.length == index) index = 0
-            for (let i = 0; promises.length < concurrency && index < urls.length; i++) {
-                promises.push(getRequest('','',urls[index]))
-                index++;
-            }
-            await Promise.all(promises);
-            promises.length = 0;
+            await Promise.allSettled(promises);
         } catch (error) {
-            console.log("Process exited with error code: F")
-            throw new Error(error)
+            throw new Error(error);
         }
-    }
-    console.log('Loop exited')
-}
+    };
+
+    try {
+        while ((Date.now() - startTime) < (hours * HOUR)) {
+            urls = await urlsToRequest(begin, limit);
+            if (index >= length) {begin = 0;index = 0;}
+            const promises = [];
+            for (let i = 0; promises.length < urls.length && promises.length < concurrency && index < length; i++) {
+                if (isValidURL(urls[i])) promises.push(getRequest(urls[i]));
+            }
+            await handlePromises(promises);
+            index += urls.length;
+            begin += limit;
+        }
+    } catch (err) {
+        log("LOOP HAD AN EXCEPTION")
+        error(err) 
+    }    
+    log('Loop finished');
+};

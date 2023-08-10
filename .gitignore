@@ -129,5 +129,5 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-.docs
-.public
+/docs/utils/
+/public
