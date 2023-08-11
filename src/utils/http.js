@@ -61,16 +61,33 @@ const baseFrom = (url) => {
     return urlObject.hostname;
 }
 //------------XML-DATA------------------
+/**
+ * 
+ * @param {String} body String representation of response body.
+ * @returns True if body is a valid string representation of XML File structure. False otherwise.
+ */
 const isXML = (body) => {
   const xmlRegex = /<\?xml.*\?>/i;
   return xmlRegex.test(body);
 };
+/**
+ * 
+ * @param {Object} body Object that represents the body contents of the response. 
+ * @param {Object[]} XMLlist Array of XML elements 
+ * @returns A new XML list that contains new XML elements from the response as an array.
+ */
 const addIfXMLResponse = (body, XMLlist) => {
     let newXmlList;
     if (!isXML(body)) {return XMLlist}
     else newXmlList = extractDataFrom(body, XMLlist);
     return newXmlList;
 };
+/**
+ * 
+ * @param {String} xml XML data from the response.
+ * @param {Object} chain Object that contains all the chained data from previous responses.
+ * @returns Data from the response to chain into XML data.
+ */
 const extractDataFrom = (xml, chain) => {
     const jsChain = XML.xml2js(xml, {compact:true})
     return getImpressionsAndEvents(jsChain, chain)

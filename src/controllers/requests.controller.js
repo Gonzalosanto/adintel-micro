@@ -1,5 +1,5 @@
 import { info, error, warning, debug, log } from '../middlewares/logger/index.js';
-import { getVASTTagURI,handleBrokenResponse, handleErrorResponse, handleSuccesfulResponse, addIfXMLResponse } from "../utils/http.js";
+import { getVASTTagURI, handleBrokenResponse, handleErrorResponse, handleSuccesfulResponse, addIfXMLResponse } from "../utils/http.js";
 import fetch from "node-fetch";
 import { trigger } from "../utils/impressions.utils.js";
 
@@ -10,7 +10,7 @@ const getRequest = async (urlWithMacros) => {
     let retries = 0;
     let cookies = [];
     let eventsChain = {
-        eventChain : [],
+        eventChain : [], // this field is for logging purposes. If empty, no logging is active.
         XMLChain : {impressions:[], events:[]},
         previousURL:url,
         isSuccesful: false,
@@ -29,17 +29,18 @@ const getRequest = async (urlWithMacros) => {
                 handleErrorResponse(response.body);
                 break;
             }
+            cookies = response.headers.get('Set-Cookie')?.split(';')[0] || '';
+            //const data = await dataToLog(reqHeaders, response, url);
+            eventsChain.previousURL = url
+            //eventsChain.eventChain.push(data);
             if(response.status == 200){
                 options.headers['Cookies'] = cookies
-                url = chainRequest(response, eventsChain);
+                url = chainRequest(await response.text(), eventsChain);
             }
-            cookies = response.headers.get('Set-Cookie')?.split(';')[0] || '';
-            const data = await dataToLog(reqHeaders, response, url);
-            eventsChain.previousURL = url
-            eventsChain.eventChain.push(data);            
             retries++;
         } catch (err) {
-            if(err.name == 'AbortError') error(`${new Date().toISOString()} => ${err}`)
+            if(err.name == 'AbortError') error(`${new Date().toISOString()} => ${err.message}`)
+            if(err.name == 'FetchError') error(`${new Date().toISOString()} => ${err.message}`)
             else error(`${err.name}: ${err.message}`)
         }
     }
@@ -47,10 +48,10 @@ const getRequest = async (urlWithMacros) => {
     return eventsChain
 }
 
-const chainRequest = (response, eventsChain) => {
-    eventsChain.XMLChain = addIfXMLResponse(response, eventsChain.XMLChain);
-    eventsChain = handleResponse(response, eventsChain);
-    return handleURLAfterResponse(response, eventsChain);
+const chainRequest = (body, eventsChain) => {
+    eventsChain.XMLChain = addIfXMLResponse(body, eventsChain.XMLChain);
+    eventsChain = handleResponse(body, eventsChain);
+    return handleURLAfterResponse(body, eventsChain);
 }
 
 const setRequestHeaders = (searchParams) => {
