@@ -47,11 +47,10 @@ const getEvents = (xml) => {
     
     const extractEvents = (creativesTag) => {
         if(!creativesTag?.TrackingEvents?.Tracking) error('No events found!') 
-        return creativesTag.TrackingEvents.Tracking?.map(elem => {
-            return extractEventByAttribute(elem)
-        }) ?? [];
+        const events = creativesTag.TrackingEvents?.Tracking
+        return events ? events.map(elem => {return extractEventByAttribute(elem)}) : []
     }
-    const extractMediaFiles = (creativesTag) => { //FIX: Bug when some mediafiles are not array
+    const extractMediaFiles = (creativesTag) => {
         if(creativesTag?.MediaFiles?.MediaFile && Array.isArray(creativesTag?.MediaFiles?.MediaFile)) {
             return creativesTag?.MediaFiles?.MediaFile?.map(elem => elem?._cdata);
         }
