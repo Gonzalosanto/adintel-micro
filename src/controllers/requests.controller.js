@@ -3,6 +3,7 @@ import { getVASTTagURI, handleBrokenResponse, handleErrorResponse, handleSuccesf
 import fetch from "node-fetch";
 import { trigger } from "../utils/impressions.utils.js";
 
+const TIMEOUT_MS = 5000;
 const getRequest = async (urlWithMacros) => {
     let url = setCachebuster(urlWithMacros);
     const params = new URL(url).searchParams;
@@ -19,29 +20,35 @@ const getRequest = async (urlWithMacros) => {
         isCommonError: false,
     }
     while ((!eventsChain.isBroken && !eventsChain.isCriticalError) && retries <= 5){
+        const controller = new AbortController();
+        const timeout = setTimeout(()=>{controller.abort("TIMEDOUT")}, TIMEOUT_MS)
         try {
             let options = {
                 redirect:'follow',
                 headers: reqHeaders,
+                signal: controller.signal
             }
             const response = await fetch(url, options);
             if(response.status >= 400){
                 handleErrorResponse(response.body);
+                clearTimeout(timeout)
                 break;
             }
             cookies = response.headers.get('Set-Cookie')?.split(';')[0] || '';
             //const data = await dataToLog(reqHeaders, response, url);
-            eventsChain.previousURL = url
             //eventsChain.eventChain.push(data);
+            eventsChain.previousURL = url
             if(response.status == 200){
                 options.headers['Cookies'] = cookies
                 url = chainRequest(await response.text(), eventsChain);
             }
+            clearTimeout(timeout)
             retries++;
         } catch (err) {
             if(err.name == 'AbortError') error(`${new Date().toISOString()} => ${err.message}`)
             if(err.name == 'FetchError') error(`${new Date().toISOString()} => ${err.message}`)
             else error(`${err.name}: ${err.message}`)
+            clearTimeout(timeout)
         }
     }
     if(eventsChain.isSuccesful) {eventsChain = await handleSuccesfulChain(eventsChain)};
