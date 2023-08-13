@@ -55,7 +55,6 @@ const getEvents = (xml) => {
             return creativesTag?.MediaFiles?.MediaFile?.map(elem => elem?._cdata);
         }
         else {
-            log(creativesTag?.MediaFiles?.MediaFile)
             return creativesTag?.MediaFiles.MediaFile
         }
         
