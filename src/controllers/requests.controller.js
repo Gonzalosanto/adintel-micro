@@ -3,7 +3,7 @@ import { getVASTTagURI, handleBrokenResponse, handleErrorResponse, handleSuccesf
 import fetch from "node-fetch";
 import { trigger } from "../utils/impressions.utils.js";
 
-const TIMEOUT_MS = 5000;
+const TIMEOUT_MS = process.env.TIMEOUT_MS || 5000;
 const getRequest = async (urlWithMacros) => {
     let url = setCachebuster(urlWithMacros);
     const params = new URL(url).searchParams;
