@@ -1,5 +1,22 @@
 import 'dotenv/config';
 
+export const config = {
+    environments : [
+        {
+            production : {
+                logging: false,
+                isDebugMode: false,
+            }
+        },
+        {
+            development : {
+                logging: false,
+                isDebugMode: true,
+            }
+        }
+    ],
+}
+
 const PORT = process.env.PORT || 8080;
 const DEVICE_CATEGORY = 4
 const WIDTH = 1920
