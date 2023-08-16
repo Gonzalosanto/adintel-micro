@@ -46,8 +46,8 @@ const getEvents = (xml) => {
     if(!baseTag?.Creatives?.Creative) error('No Creatives found!')
     
     const extractEvents = (creativesTag) => {
-        if(!creativesTag?.TrackingEvents?.Tracking) error('No events found!') 
-        const events = creativesTag.TrackingEvents?.Tracking
+        if(!creativesTag?.TrackingEvents?.Tracking) error('No events found!')
+        const events = creativesTag?.TrackingEvents?.Tracking
         return events ? events.map(elem => {return extractEventByAttribute(elem)}) : []
     }
     const extractMediaFiles = (creativesTag) => {
