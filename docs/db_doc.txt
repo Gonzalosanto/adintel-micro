@@ -1,0 +1,11 @@
+Se tiene un sistema de peticiones http con macros, las cuales van a ser párametros en la url. Estos párametros tienen relaciones entre si,
+los párametros necesarios y obligatorios en primer instancia son: App Bundle, App Name y App Store URL, de estos 3 párametros, solo 2 comparten
+el sistema operativo como relación entre si. Además se tiene otra macro: UA que es dependiente del sistema operativo que comparten App Bundle y
+App Store, por cada UA se pueden escoger muchos ID y muchas IP.
+
+Se tienen varios sistemas operativos listados los cuáles definen que datos se eligen: 1 sistema operativo puede tener asociado varios bundles y
+sus store URLs respectivos.
+
+El nombre de una aplicación puede tener asociado muchos bundles debido a que pueden compartirlo, a partir de esto un bundle puede variar dependiendo del app store
+
+
