@@ -1,12 +1,20 @@
 import { DataTypes } from "sequelize";
-import { ApplicationName } from './ApplicationName.model.js';
-import { client } from './index.js'
-import { ApplicationBundle } from "./ApplicationBundle.model.js";
+import { AppBundle } from './ApplicationBundle.model.js';
+import { AppStore } from './ApplicationStore.model.js';
+import { db } from './index.js'
 
-export const ApplicationName = client.define('ApplicationName', {
-    id: {type: DataTypes.NUMBER, allowNull: false, primaryKey: true, unique: true, autoIncrement: true},
-    application_name: {type: DataTypes.STRING, allowNull: false }
-}, {})
+export const AppName = db.define('AppName', {
+    id: {type: DataTypes.NUMBER, primaryKey: true, autoIncrement: true},
+    name: {type: DataTypes.STRING, allowNull: false }
+});
+
+AppName.hasOne(AppStore,{
+    foreignkey: 'store'
+});
+AppName.belongsTo(AppBundle,{
+    foreignkey: 'bundle',
+    target_key: 'name'
+});
 
 (async () => {
     client.sync({force: true})
