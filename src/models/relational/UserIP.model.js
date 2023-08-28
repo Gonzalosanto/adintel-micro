@@ -1,5 +1,4 @@
 import { DataTypes } from "sequelize";
-import { db } from './index.js'
 import { UserAgent } from "./UserAgent.model.js";
 
 export const UserIP = db.define('UserIP', {
@@ -11,7 +10,3 @@ UserIP.belongsTo(UserAgent,{
     foreignkey: 'ua',
     target_key: 'uip'
 });
-
-(async () => {
-    client.sync({force: true})
-})();

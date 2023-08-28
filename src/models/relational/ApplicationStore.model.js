@@ -1,5 +1,4 @@
 import { DataTypes } from "sequelize";
-import { db } from './index.js'
 import { AppName } from "./ApplicationName.model.js";
 import { OperativeSystem } from "./OperativeSystem.model.js";
 
@@ -15,7 +14,3 @@ AppStore.belongsTo(AppName,{
     foreignkey: 'name',
     target_key: 'store'
 });
-
-(async () => {
-    client.sync({force: true})
-})();
