@@ -1,22 +1,8 @@
 import { DataTypes } from "sequelize";
-import { OperativeSystem } from "./OperativeSystem.model.js";
-import { UserIP } from "./UserIP.model.js";
-import { DeviceId } from "./DeviceID.model.js";
+import { db_client } from '../../db/mariadb.js';
 
-export const UserAgent = db.define('UserAgent', {
-    id: {type: DataTypes.NUMBER, primaryKey: true, autoIncrement: true},
+export const UserAgent = db_client.define('UserAgent', {
+    id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
     ua: {type: DataTypes.STRING, allowNull: false }
 });
 
-UserAgent.hasMany(UserIP,{
-    foreignkey: 'uip'
-});
-
-UserAgent.hasMany(DeviceId,{
-    foreignkey: 'deviceid'
-});
-
-UserAgent.belongsTo(OperativeSystem,{
-    foreignkey: 'os',
-    target_key: 'ua'
-});

@@ -1,16 +1,7 @@
 import { DataTypes } from "sequelize";
-import { AppBundle } from './ApplicationBundle.model.js';
-import { AppStore } from './ApplicationStore.model.js';
+import { db_client } from '../../db/mariadb.js';
 
-export const AppName = db.define('AppName', {
-    id: {type: DataTypes.NUMBER, primaryKey: true, autoIncrement: true},
+export const AppName = db_client.define('AppName', {
+    id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
     name: {type: DataTypes.STRING, allowNull: false }
-});
-
-AppName.hasOne(AppStore,{
-    foreignkey: 'store'
-});
-AppName.belongsTo(AppBundle,{
-    foreignkey: 'bundle',
-    target_key: 'name'
 });

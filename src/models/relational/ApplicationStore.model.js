@@ -1,16 +1,8 @@
 import { DataTypes } from "sequelize";
-import { AppName } from "./ApplicationName.model.js";
-import { OperativeSystem } from "./OperativeSystem.model.js";
+import { db_client } from '../../db/mariadb.js';
 
-export const AppStore = db.define('AppStore', {
-    id: {type: DataTypes.NUMBER, primaryKey: true, autoIncrement: true},
+export const AppStore = db_client.define('AppStore', {
+    id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
     store: {type: DataTypes.STRING, allowNull: false }
 });
 
-AppStore.hasOne(OperativeSystem,{
-    foreignkey: 'os'
-});
-AppStore.belongsTo(AppName,{
-    foreignkey: 'name',
-    target_key: 'store'
-});

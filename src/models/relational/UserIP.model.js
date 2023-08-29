@@ -1,12 +1,8 @@
 import { DataTypes } from "sequelize";
-import { UserAgent } from "./UserAgent.model.js";
+import { db_client } from '../../db/mariadb.js'
 
-export const UserIP = db.define('UserIP', {
-    id: {type: DataTypes.NUMBER, primaryKey: true, autoIncrement: true},
+export const UserIP = db_client.define('UserIP', {
+    id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
     uip: {type: DataTypes.STRING, allowNull: false }
 });
 
-UserIP.belongsTo(UserAgent,{
-    foreignkey: 'ua',
-    target_key: 'uip'
-});

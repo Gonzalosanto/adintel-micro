@@ -1,12 +1,9 @@
 import { DataTypes } from "sequelize";
-import { UserAgent } from "./UserAgent.model.js";
+import { db_client } from "../../db/mariadb.js";
 
-export const DeviceId = db.define('DeviceId', {
-    id: {type: DataTypes.NUMBER, primaryKey: true, autoIncrement: true},
-    deviceid: {type: DataTypes.STRING, allowNull: false }
+export const DeviceId = db_client.define("DeviceId", {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  deviceid: { type: DataTypes.STRING, allowNull: false },
 });
 
-DeviceId.belongsTo(UserAgent,{
-    foreignkey: 'ua',
-    target_key: 'deviceid'
-});
+
