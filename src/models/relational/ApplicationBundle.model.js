@@ -1,16 +1,7 @@
 import { DataTypes } from "sequelize";
-import { AppName } from './ApplicationName.model.js';
-import { db } from './index.js'
+import { client } from '../../db/mariadb.js'
 
-export const AppBundle = db.define('AppBundle', {
-    id: {type: DataTypes.NUMBER, primaryKey: true, autoIncrement: true},
+export const AppBundle = client.define('AppBundle', {
+    id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
     bundle: {type: DataTypes.STRING, allowNull: false }
 });
-
-AppBundle.hasOne(AppName,{
-    foreignkey: 'name'
-});
-
-(async () => {
-    client.sync({force: true})
-})();
