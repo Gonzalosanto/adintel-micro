@@ -1,5 +1,4 @@
 import { DataTypes } from "sequelize";
-import { db } from './index.js'
 import { UserAgent } from "./UserAgent.model.js";
 
 export const DeviceId = db.define('DeviceId', {
@@ -11,7 +10,3 @@ DeviceId.belongsTo(UserAgent,{
     foreignkey: 'ua',
     target_key: 'deviceid'
 });
-
-(async () => {
-    client.sync({force: true})
-})();

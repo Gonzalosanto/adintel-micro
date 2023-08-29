@@ -1,5 +1,4 @@
 import { DataTypes } from "sequelize";
-import { db } from './index.js'
 import { OperativeSystem } from "./OperativeSystem.model.js";
 import { UserIP } from "./UserIP.model.js";
 import { DeviceId } from "./DeviceID.model.js";
@@ -21,7 +20,3 @@ UserAgent.belongsTo(OperativeSystem,{
     foreignkey: 'os',
     target_key: 'ua'
 });
-
-(async () => {
-    client.sync({force: true})
-})();
