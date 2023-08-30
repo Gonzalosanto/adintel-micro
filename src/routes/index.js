@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { abort, start } from "./requests/index.js";
 import { saveFileData } from "./requests/file.js";
+import { saveDataToDB } from "./requests/database.js";
 
 export const router = Router();
 
@@ -22,5 +23,14 @@ router.get('/file', async (req,res, next)=> {
         res.status(200).send("Your request has been fulfilled")
     } catch (error) {
         res.status(500).send(error);
+    }
+})
+
+router.get('/save', async (req, res)=>{
+    try {
+        await saveDataToDB('/docs/bundles.csv');
+        res.send('Data saved successfully')
+    } catch (err) {
+        res.status(500).send(err);
     }
 })
