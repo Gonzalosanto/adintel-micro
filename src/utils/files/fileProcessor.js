@@ -2,9 +2,10 @@ import fs from "fs"
 import path from "path";
 import { parse } from 'csv-parse';
 import { macros } from './config.js'
+import { BulkInsertAppBundle, BulkInsertAppNames, BulkInsertAppStore, BulkInsertOS, BulkInsertDeviceID, BulkInsertUserAgent, BulkInsertUserIP} from '../../services/vast.service.js'
 import { InsertManyMacros } from '../../services/macros.service.js'
 
-const Keys = ['app_bundle','app_name','app_store_url','device_id','ua','uip']
+const Keys = ['app_bundle', 'app_name', 'app_store_url', 'device_id', 'ua', 'uip']
 /**
  * 
  * @param {String} url 
@@ -18,7 +19,7 @@ const setMacros = (keys, data) => {
     if (typeof data !== 'object' || typeof keys !== 'object') {
         throw new Error('Invalid input parameters');
     }
-    Object.values(data).forEach((d,i) =>{if (keys[i]) entries.push([keys[i],d])})
+    Object.values(data).forEach((d, i) => { if (keys[i]) entries.push([keys[i], d]) })
     entries = Object.fromEntries(entries);
     const dataToSave = {
         ...entries
@@ -26,7 +27,7 @@ const setMacros = (keys, data) => {
     try {
         return dataToSave
     }
-    catch (err) {console.error('Error processing macros:', err);return null;}
+    catch (err) { console.error('Error processing macros:', err); return null; }
 }
 /**
  * 
@@ -39,20 +40,40 @@ export const processData = async (data) => {
     try {
         let macros = []
         let index = 0;
-        while(index < data.length){
+        while (index < data.length) {
             for (let i = index; i < 1000 + index; i++) {
-                if(data[i]){
+                if (data[i]) {
                     macros.push(setMacros(Keys, data[i]))
                     index++;
-                }                
+                }
             }
             await InsertManyMacros(macros)
             macros.length = 0
-        }  
+        }
     } catch (error) {
         console.log(error)
     }
-    
+}
+
+export const processBundles = async (data) => {
+    try {
+        // let bundles = []
+        // let stores = []
+        let names = []
+        // let os = []
+        data.map((row)=>{
+            //bundles.push(row[0])
+            names.push(row[1])
+            // stores.push(row[2])
+            // os.push(row[3])
+        })
+        //BulkInsertAppBundle([...new Set(bundles)].map(b=> {return {bundle:b}}))
+        BulkInsertAppNames([...new Set(names)].map(n => {return {name:encodeURIComponent(n)}}))
+        //BulkInsertAppStore([...new Set(stores)].map(s => {return {store:s}}))
+        //BulkInsertOS([...new Set(os)].map(o => {return {os: o}}))
+    } catch (error) {
+        console.log(error)
+    }
 }
 
 /**
@@ -65,17 +86,17 @@ export const processFile = async (filename, delimiter) => {
     const records = [];
     const parser = fs.createReadStream(path.join(process.cwd(), filename)).pipe(
         parse({
-            delimiter:delimiter || ',',
-            skip_records_with_empty_values:true,
-            skip_records_with_error:true
+            delimiter: delimiter || ',',
+            skip_records_with_empty_values: true,
+            skip_records_with_error: true
         })
     );
-    for await (const record of parser){
-        if(records.length == 5000){
+    for await (const record of parser) {
+        if (records.length == 5000) {
             processData(records);
             records.length = 0;
         }
         records.push(record)
     }
-    return processData(records);
+    return processBundles(records);
 }
