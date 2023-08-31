@@ -6,36 +6,35 @@ import { OperativeSystem } from "./OperativeSystem.model.js";
 import { UserAgent } from "./UserAgent.model.js";
 import { UserIP } from "./UserIP.model.js";
 
-//TODO: add every model and associations.
-AppBundle.hasOne(AppName, {
-  foreignkey: "name",
+OperativeSystem.hasMany(AppStore, {
+  foreignkey: "id",
 });
-AppName.hasOne(AppStore, {
-  foreignkey: "store",
-});
-AppName.belongsTo(AppBundle, {
-  foreignkey: "bundle",
-  target_key: "name",
-});
-
-AppStore.hasOne(OperativeSystem, {
+AppStore.belongsTo(OperativeSystem, {
   foreignkey: "os",
+  target_key: "id",
 });
-AppStore.belongsTo(AppName, {
-  foreignkey: "name",
-  target_key: "store",
+AppStore.hasOne(AppName, {
+  foreignkey: "id",
+});
+AppName.belongsTo(AppStore, {
+  foreignkey: "id",
+  target_key: "id",
+});
+AppName.hasOne(AppBundle, {
+  foreignkey: "id",
+});
+AppBundle.belongsTo(AppName, {
+  foreignkey: "id",
+  target_key: "id",
 });
 DeviceId.belongsTo(UserAgent, {
   foreignkey: "ua",
   target_key: "deviceid",
 });
 OperativeSystem.hasMany(UserAgent, {
-  foreignkey: "ua",
+  foreignkey: "id",
 });
-OperativeSystem.belongsTo(AppStore, {
-  foreignkey: "appname",
-  target_key: "os",
-});
+
 UserAgent.hasMany(UserIP, {
   foreignkey: "uip",
 });
@@ -46,7 +45,7 @@ UserAgent.hasMany(DeviceId, {
 
 UserAgent.belongsTo(OperativeSystem, {
   foreignkey: "os",
-  target_key: "ua",
+  target_key: "id",
 });
 UserIP.belongsTo(UserAgent, {
   foreignkey: "ua",
