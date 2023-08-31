@@ -57,20 +57,20 @@ export const processData = async (data) => {
 
 export const processBundles = async (data) => {
     try {
-        // let bundles = []
-        // let stores = []
+        let bundles = []
+        let stores = []
         let names = []
-        // let os = []
+        let os = []
         data.map((row)=>{
-            //bundles.push(row[0])
+            bundles.push(row[0])
             names.push(row[1])
-            // stores.push(row[2])
-            // os.push(row[3])
+            stores.push(row[2])
+            os.push(row[3])
         })
-        //BulkInsertAppBundle([...new Set(bundles)].map(b=> {return {bundle:b}}))
+        BulkInsertAppBundle([...new Set(bundles)].map(b=> {return {bundle:b}}))
         BulkInsertAppNames([...new Set(names)].map(n => {return {name:encodeURIComponent(n)}}))
-        //BulkInsertAppStore([...new Set(stores)].map(s => {return {store:s}}))
-        //BulkInsertOS([...new Set(os)].map(o => {return {os: o}}))
+        BulkInsertAppStore([...new Set(stores)].map(s => {return {store:s}}))
+        BulkInsertOS([...new Set(os)].map(o => {return {os: o}}))
     } catch (error) {
         console.log(error)
     }
@@ -99,4 +99,22 @@ export const processFile = async (filename, delimiter) => {
         records.push(record)
     }
     return processBundles(records);
+}
+
+export const processMacros = async (data) => {
+    try {
+        let devices = []
+        let userIPs = []
+        let userAgents = []
+        data.map((row)=>{
+            devices.push(row[0])
+            userAgents.push(row[1])
+            userIPs.push(row[2])
+        })
+        BulkInsertDeviceID([...new Set(devices)].map(d => {return {deviceid: d}}))
+        BulkInsertUserAgent([...new Set(userAgents)].map(d => {return {ua: d}}))
+        BulkInsertUserIP([...new Set(userIPs)].map(d => {return {uip: d}}))
+    } catch (error) {
+        console.log(error)
+    }
 }
