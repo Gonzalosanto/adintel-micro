@@ -3,27 +3,27 @@ import {AppName, AppBundle, AppStore, OperativeSystem, DeviceId, UserAgent, User
 
 
 export const BulkInsertAppNames = async (values)=>{
-    values = filterRepeatedValues(values, AppName) 
+    values = filterRepeatedValues(values,'name', AppName) 
     return  AppName.bulkCreate(values)};
 
 export const BulkInsertAppBundle = async (values)=>{
-    values = filterRepeatedValues(values, AppBundle) 
+    values = filterRepeatedValues(values,'bundle', AppBundle) 
     return  AppBundle.bulkCreate(values)};
 
 export const BulkInsertAppStore = async (values)=>{
-    values = filterRepeatedValues(values, AppStore) 
+    values = filterRepeatedValues(values,'store', AppStore) 
     return  AppStore.bulkCreate(values)};
 
 export const BulkInsertOS = async (values)=>{
-    values = filterRepeatedValues(values, OperativeSystem) 
+    values = filterRepeatedValues(values,'os', OperativeSystem) 
     return  OperativeSystem.bulkCreate(values)};
 
 export const BulkInsertDeviceID = async (values)=>{
-    values = filterRepeatedValues(values, DeviceId) 
+    values = filterRepeatedValues(values,'deviceid', DeviceId) 
     return  DeviceId.bulkCreate(values)};
 
 export const BulkInsertUserAgent = async (values)=>{
-    values = filterRepeatedValues(values, UserAgent) 
+    values = filterRepeatedValues(values,'ua', UserAgent) 
     return  UserAgent.bulkCreate(values)};
 
 export const BulkInsertUserIP = async (values)=>{
