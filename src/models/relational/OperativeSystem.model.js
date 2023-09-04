@@ -5,4 +5,3 @@ export const OperativeSystem = db_client.define('OperativeSystem', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
     os: {type: DataTypes.STRING, allowNull: false }
 });
-
