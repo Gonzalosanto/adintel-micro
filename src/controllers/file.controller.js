@@ -20,7 +20,6 @@ const saveRecords = async (rows) => {
 				newArray.push(element)
 			}
 		}
-		console.log(newArray.length)
 		return newArray;
 	}
 	try {
