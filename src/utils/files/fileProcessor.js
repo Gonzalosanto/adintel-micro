@@ -72,5 +72,5 @@ export const processFile = async (filename, delimiter) => {
     for await (const record of parser) {
         records.push(record)
     }
-    return processData(records); //Edge case
+    return records; //Edge case
 }
