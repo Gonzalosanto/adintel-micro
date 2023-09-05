@@ -40,3 +40,36 @@ export const SelectAll = async (attributes, model) => {
     if(attributes) return model.findAll(attributes)
     return model.findAll()
 };
+
+export const saveBundles = async (data) => {
+    const {os, bundles, stores, names} = data
+    const associateForeignKey = (tableValues, tableColumn, foreignTableValue, foreignKey) => {
+        return tableValues.map(tv => {
+            if( tv[tableColumn] == foreignTableValue[tableColumn] ){
+                tv[foreignKey] = foreignTableValue.id
+                delete tv[tableColumn]
+                return tv
+            }
+        }).filter(v => v);
+    }
+    const OSSet = [...new Set(os)]
+    OSSet.map(o => saveIfNotExists(OperativeSystem, {os: o}))
+
+    const OSValues = (await OperativeSystem.findAll({attributes: ['id','os']})).map(v => v.dataValues)
+    const storesWithFK = OSValues.map(s => associateForeignKey(stores, 'os', s, 'OperativeSystemId')).flat()
+    storesWithFK.map(sfk => saveIfNotExists(AppStore, sfk))
+    
+    const storesValues = (await AppStore.findAll({attributes: ['id','store']})).map(v => v.dataValues)
+    const namesWithFK = storesValues.map(s => associateForeignKey(names, 'store', s, 'AppStoreId')).flat() //one-to-many relationship btw store -> name
+    namesWithFK.map(nfk => saveIfNotExists(AppName, nfk))
+
+    const namesValues = (await AppName.findAll({attributes: ['id','name']})).map(v => v.dataValues)
+    const bundlesWithFK = namesValues.map(s => associateForeignKey(bundles, 'name', s, 'AppNameId')).flat()
+    bundlesWithFK.map(bfk => saveIfNotExists(AppBundle, bfk))
+}
+const saveIfNotExists = async (model, value) => {
+    const result = await model.findOne({where : value})
+    if(!result) {
+        return model.create(value)
+    }
+}
