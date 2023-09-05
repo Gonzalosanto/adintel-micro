@@ -15,7 +15,7 @@ AppStore.belongsTo(OperativeSystem, {
   target_key: "id",
 });
 // Relationship between AppStore and AppName
-AppStore.hasOne(AppName, {
+AppStore.hasMany(AppName, {
   foreignkey: "id",
 });
 AppName.belongsTo(AppStore, {
