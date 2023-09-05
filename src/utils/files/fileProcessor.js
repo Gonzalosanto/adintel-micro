@@ -72,22 +72,5 @@ export const processFile = async (filename, delimiter) => {
     for await (const record of parser) {
         records.push(record)
     }
-    return records;
-}
-export const processMacros = async (data) => {
-    try {
-        let devices = []
-        let userIPs = []
-        let userAgents = []
-        data.map((row)=>{
-            devices.push(row[0])
-            userAgents.push(row[1])
-            userIPs.push(row[2])
-        })
-        BulkInsertDeviceID([...new Set(devices)].map(d => {return {deviceid: d}}))
-        BulkInsertUserAgent([...new Set(userAgents)].map(d => {return {ua: d}}))
-        BulkInsertUserIP([...new Set(userIPs)].map(d => {return {uip: d}}))
-    } catch (error) {
-        console.log(error)
-    }
+    return processData(records); //Edge case
 }

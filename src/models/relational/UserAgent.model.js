@@ -5,4 +5,3 @@ export const UserAgent = db_client.define('UserAgent', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
     ua: {type: DataTypes.STRING, allowNull: false }
 });
-
