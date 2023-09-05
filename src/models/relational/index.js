@@ -7,50 +7,50 @@ import { UserAgent } from "./UserAgent.model.js";
 import { UserIP } from "./UserIP.model.js";
 
 // Relationship between OS and AppStore
-OperativeSystem.hasMany(AppStore, {
+export const OS_has_Stores= OperativeSystem.hasMany(AppStore, {
   foreignkey: "id",
 });
-AppStore.belongsTo(OperativeSystem, {
+export const Store_belongsTo_OS = AppStore.belongsTo(OperativeSystem, {
   foreignkey: "os",
   target_key: "id",
 });
 // Relationship between AppStore and AppName
-AppStore.hasMany(AppName, {
+export const Store_has_Names =AppStore.hasMany(AppName, {
   foreignkey: "id",
 });
-AppName.belongsTo(AppStore, {
+export const Name_belongsTo_Store =AppName.belongsTo(AppStore, {
   foreignkey: "id",
   target_key: "id",
 });
 // Relationship between AppStore and AppName
-AppName.hasOne(AppBundle, {
+export const Name_has_Bundle = AppName.hasOne(AppBundle, {
   foreignkey: "id",
 });
-AppBundle.belongsTo(AppName, {
+export const Bundle_belongsTo_Name = AppBundle.belongsTo(AppName, {
   foreignkey: "id",
   target_key: "id",
 });
 // Relationship between OS and UA
-OperativeSystem.hasMany(UserAgent, {
+export const OS_has_UAs = OperativeSystem.hasMany(UserAgent, {
   foreignkey: "id",
 });
-UserAgent.belongsTo(OperativeSystem, {
+export const UA_belongsTo_OS = UserAgent.belongsTo(OperativeSystem, {
   foreignkey: "os",
   target_key: "id",
 });
 // Relationship between UA and UIP
-UserAgent.hasMany(UserIP, {
+export const UA_has_UIPs = UserAgent.hasMany(UserIP, {
   foreignkey: "uip",
 });
-UserIP.belongsTo(UserAgent, {
+export const UIP_belongsTo_UA = UserIP.belongsTo(UserAgent, {
   foreignkey: "ua",
   target_key: "uip",
 });
 // Relationship between UA and DeviceId
-UserAgent.hasMany(DeviceId, {
+export const UA_has_DeviceIDs = UserAgent.hasMany(DeviceId, {
   foreignkey: "deviceid",
 });
-DeviceId.belongsTo(UserAgent, {
+export const DeviceID_belongsTo_UA = DeviceId.belongsTo(UserAgent, {
   foreignkey: "ua",
   target_key: "deviceid",
 });
