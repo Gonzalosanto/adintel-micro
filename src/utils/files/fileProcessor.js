@@ -54,28 +54,6 @@ export const processData = async (data) => {
         console.log(error)
     }
 }
-
-export const processBundles = async (data) => {
-    try {
-        let bundles = []
-        let stores = []
-        let names = []
-        let os = []
-        data.map((row)=>{
-            bundles.push(row[0])
-            names.push(row[1])
-            stores.push(row[2])
-            os.push(row[3])
-        })
-        BulkInsertAppBundle([...new Set(bundles)].map(b=> {return {bundle:b}}))
-        BulkInsertAppNames([...new Set(names)].map(n => {return {name:encodeURIComponent(n)}}))
-        BulkInsertAppStore([...new Set(stores)].map(s => {return {store:s}}))
-        BulkInsertOS([...new Set(os)].map(o => {return {os: o}}))
-    } catch (error) {
-        console.log(error)
-    }
-}
-
 /**
  * 
  * @param {String} filename It's the relative path from root where it's stored the file to read. 
@@ -92,15 +70,10 @@ export const processFile = async (filename, delimiter) => {
         })
     );
     for await (const record of parser) {
-        if (records.length == 5000) {
-            processData(records);
-            records.length = 0;
-        }
         records.push(record)
     }
-    return processBundles(records);
+    return records;
 }
-
 export const processMacros = async (data) => {
     try {
         let devices = []
