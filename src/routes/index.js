@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { abort, start } from "./requests/index.js";
 import { saveDataToDB, saveFileData } from "../controllers/file.controller.js";
+import { saveBundles, saveDeviceData } from "../services/vast.service.js";
 
 export const router = Router();
 
@@ -27,7 +28,16 @@ router.get('/file', async (req,res, next)=> {
 
 router.get('/save', async (req, res)=>{
     try {
-        await saveDataToDB('/docs/newBundles.csv');
+        await saveDataToDB('/docs/newBundles.csv', saveBundles);
+        res.send('Data saved successfully')
+    } catch (err) {
+        res.status(500).send(err);
+    }
+})
+
+router.get('/saveDeviceData', async (req, res)=>{
+    try {
+        await saveDataToDB('/docs/roku1.csv', saveDeviceData);
         res.send('Data saved successfully')
     } catch (err) {
         res.status(500).send(err);
