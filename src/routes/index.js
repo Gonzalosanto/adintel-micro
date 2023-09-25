@@ -28,7 +28,7 @@ router.get('/file', async (req,res, next)=> {
 
 router.get('/save', async (req, res)=>{
     try {
-        await saveDataToDB('/docs/newBundles.csv', saveBundles);
+        await saveDataToDB('/docs/lastBundles.csv', saveBundles);
         res.send('Data saved successfully')
     } catch (err) {
         res.status(500).send(err);
@@ -37,7 +37,7 @@ router.get('/save', async (req, res)=>{
 
 router.get('/saveDeviceData', async (req, res)=>{
     try {
-        await saveDataToDB('/docs/roku1.csv', saveDeviceData);
+        await saveDataToDB('/docs/apple1.csv', saveDeviceData);
         res.send('Data saved successfully')
     } catch (err) {
         res.status(500).send(err);

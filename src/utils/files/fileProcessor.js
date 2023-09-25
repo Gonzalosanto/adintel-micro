@@ -1,8 +1,6 @@
 import fs from "fs"
 import path from "path";
 import { parse } from 'csv-parse';
-import { macros } from './config.js'
-import { BulkInsertAppBundle, BulkInsertAppNames, BulkInsertAppStore, BulkInsertOS, BulkInsertDeviceID, BulkInsertUserAgent, BulkInsertUserIP} from '../../services/vast.service.js'
 import { InsertManyMacros } from '../../services/macros.service.js'
 
 const Keys = ['app_bundle', 'app_name', 'app_store_url', 'device_id', 'ua', 'uip']

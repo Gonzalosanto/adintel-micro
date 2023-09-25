@@ -7,7 +7,7 @@ import { } from './src/models/relational/index.js'
 
 app.use(router)
 
-db_client.sync() //Connects with mariadb server and sync imported models
+db_client.sync({alter:true}) //Connects with mariadb server and sync imported models
 
 app.listen(process.env.PORT, ()=>{
     console.log("Server is listening on : " + process.env.PORT)
