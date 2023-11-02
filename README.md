@@ -12,9 +12,13 @@ npm install
 
 node app.js
 ```
-Comando opcional para modo de desarrollo -> `npm run dev `
+Comando opcional para ejecutar el proyecto con deteccion de cambios en los archivos -> `npm run dev `
 
-Nota: Es importante setear variables de entorno de desarrollo en un archivo .env Las siguientes variables son vitales para el funcionamiento correcto:
+Nota: Tener instalado Nodemon globalmente para poder ejecutar el script: ` npm run dev `
+
+Nota: Es importante setear variables de entorno de desarrollo en un archivo .env.
+
+Las siguientes variables son vitales para el funcionamiento correcto:
 ```
 BUNDLE_LIST = 'ruta del archivo con la lista de bundles'
 DELIMITER = ';' o cualquier caracter separador del archivo CSV
