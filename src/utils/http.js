@@ -1,5 +1,4 @@
 import XML from "xml-js";
-import { error, debug } from "../middlewares/logger/index.js";
 import { getImpressionsAndEvents } from "./impressions.utils.js";
 
 const XML_VAST_AD_TAG = 'VASTAdTagURI';
