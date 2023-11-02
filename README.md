@@ -20,11 +20,7 @@ Nota: Es importante setear variables de entorno de desarrollo en un archivo .env
 
 Las siguientes variables son vitales para el funcionamiento correcto:
 ```
-BUNDLE_LIST = 'ruta del archivo con la lista de bundles'
-DELIMITER = ';' o cualquier caracter separador del archivo CSV
-MONGO_URL = 'URL de la DB'
-MONGO_DB_NAME = 'Nombre de la DB en la cual alojaremos las colecciones de MongoDB'
-AID = 'ID del advertiser del AdServer'
+ID = 'ID del advertiser del AdServer'
 PORT = 8000 (Default port)
-BASE_URL = http://s.adtelligent.com (AdServer BaseURL)
+BASE_URL = (AdServer BaseURL)
 ```
