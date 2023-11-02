@@ -6,22 +6,21 @@
   "scripts": {
     "development": "node --max-old-space-size=4096 app.js",
     "dev": "nodemon app.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha test/http",
     "production": "node app.js"
   },
   "author": "gonzalosanto",
   "license": "ISC",
   "dependencies": {
-    "csv-parse": "^5.4.0",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "mongodb": "5.7",
-    "mongoose": "^7.4.1",
     "node-fetch": "^3.3.1",
     "xml-js": "^1.6.11"
   },
   "type": "module",
   "devDependencies": {
-    "express-status-monitor": "^1.3.4"
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
+    "supertest": "^6.3.3"
   }
 }

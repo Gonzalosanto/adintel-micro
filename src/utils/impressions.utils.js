@@ -1,5 +1,6 @@
-import fetch from "node-fetch"
-import { debug, error, log, warning } from "../middlewares/logger/index.js"
+import fetch from "node-fetch";
+import { error } from "../middlewares/logger/index.js";
+
 /**
  * 
  * @param {object} xml Object that contains Impressions
