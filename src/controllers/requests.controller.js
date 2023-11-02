@@ -1,4 +1,4 @@
-import { info, error, warning, debug, log } from '../middlewares/logger/index.js';
+import { error, log } from '../middlewares/logger/index.js';
 import { getVASTTagURI, handleBrokenResponse, handleErrorResponse, handleSuccesfulResponse, addIfXMLResponse } from "../utils/http.js";
 import fetch from "node-fetch";
 import { trigger } from "../utils/impressions.utils.js";
