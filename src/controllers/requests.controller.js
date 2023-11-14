@@ -8,7 +8,6 @@ const getRequest = async (urlWithMacros) => {
     let url = setCachebuster(urlWithMacros);
     const params = new URL(url).searchParams;
     const reqHeaders = setRequestHeaders(params);
-    let retries = 0;
     let cookies = [];
     let eventsChain = {
         eventChain : [], // this field is for logging purposes. If empty, no logging is active.
@@ -19,7 +18,8 @@ const getRequest = async (urlWithMacros) => {
         isCriticalError: false,
         isCommonError: false,
     }
-    while ((!eventsChain.isBroken && !eventsChain.isCriticalError) && retries <= 5){
+
+    while ((!eventsChain.isBroken && !eventsChain.isCriticalError && !eventsChain.isSuccesful)){
         const controller = new AbortController();
         const timeout = setTimeout(()=>{controller.abort("TIMEDOUT")}, TIMEOUT_MS)
         try {
@@ -35,23 +35,21 @@ const getRequest = async (urlWithMacros) => {
                 break;
             }
             cookies = response.headers.get('Set-Cookie')?.split(';')[0] || '';
-            //const data = await dataToLog(reqHeaders, response, url);
-            //eventsChain.eventChain.push(data);
             eventsChain.previousURL = url
             if(response.status == 200){
                 options.headers['Cookies'] = cookies
                 url = chainRequest(await response.text(), eventsChain);
             }
             clearTimeout(timeout)
-            retries++;
         } catch (err) {
             if(err.name == 'AbortError') error(`${new Date().toISOString()} => ${err.message}`)
             if(err.name == 'FetchError') error(`${new Date().toISOString()} => ${err.message}`)
             else error(`${err.name}: ${err.message}`)
-            clearTimeout(timeout)
         }
     }
-    if(eventsChain.isSuccesful) {eventsChain = await handleSuccesfulChain(eventsChain)};
+    if(eventsChain.isSuccesful) {
+        await handleSuccesfulChain(eventsChain)
+    };
     return eventsChain
 }
 
@@ -101,7 +99,6 @@ const handleSuccesfulChain = async (chain) => {
     const res = await trigger(chain.XMLChain)
     chain.eventChain.push(JSON.stringify(res))
     log(`${new Date().toISOString()} --- Cadena Exitosa`)
-    return chain
 }
 
 const handleResponse = (body, chain) => {
