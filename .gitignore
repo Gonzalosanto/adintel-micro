@@ -130,4 +130,6 @@ dist
 .pnp.*
 
 /docs/utils/
+/docs/lists/
+/docs/
 /public
