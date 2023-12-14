@@ -1,6 +1,4 @@
 import { getRequest } from "./requests.controller.js";
-import { GetMacrosLength } from '../services/macros.service.js'
-import { urlsToRequest } from '../utils/builder.utils.js'
 import { isValidURL } from "../utils/http.js";
 import { error, log } from "../middlewares/logger/index.js";
 import { config } from '../../config/index.js'
@@ -16,13 +14,13 @@ export const runRequestsConcurrently = async (concurrency, hours) => {
     let index = 0;
     let begin = 0;
     const limit = Number.parseInt(concurrency);
-    const length = await GetMacrosLength();
+    const length = 200;
     let urls;
 
     try {
         // TODO: handle any unexpected memory leak
         while ((Date.now() - startTime) < (hours * HOUR)) {
-            urls = await urlsToRequest(begin, limit);
+            urls = []
             if (index >= length) {begin = 0;index = 0;}
             const promises = urls.filter(url => isValidURL(url)).map(url => getRequest(url, options));
             await Promise.allSettled(promises);
