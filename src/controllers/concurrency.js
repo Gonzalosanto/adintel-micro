@@ -19,7 +19,7 @@ export const runRequestsConcurrently = async (concurrency, hours) => {
     try {
         // TODO: handle any unexpected memory leak -> Retries could generate leaks...
         while ((Date.now() - startTime) < (hours * HOUR)) {
-            urls = await urlsToRequest(begin, limit);
+            urls = await urlsToRequest(begin, limit); //URLS TO REQUEST IS NOT VALID
             if (index >= length) {begin = 0;index = 0;}
             const promises = urls.filter(url => isValidURL(url)).map(url => getRequest(url, options));
             await Promise.allSettled(promises);
