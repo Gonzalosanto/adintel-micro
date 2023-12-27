@@ -1,7 +1,16 @@
 import { error, log } from '../middlewares/logger/index.js';
-import { getVASTTagURI, handleBrokenResponse, handleErrorResponse, handleSuccesfulResponse, addIfXMLResponse } from "../utils/http.js";
+import { getVASTTagURI, handleBrokenResponse, handleErrorResponse, handleSuccesfulResponse, addIfXMLResponse, getAID, getBundle } from "../utils/http.js";
 import fetch from "node-fetch";
 import { trigger } from "../utils/impressions.utils.js";
+
+const report = {
+    requests: 0,
+    impressions: 0,
+    supply_aid: null,
+    demand_aid: null,
+    bundle: null
+}
+const broker_topic = process.env.REPORTS_TOPIC;
 
 const TIMEOUT_MS = process.env.TIMEOUT_MS || 5000;
 const getRequest = async (urlWithMacros) => {
@@ -20,6 +29,7 @@ const getRequest = async (urlWithMacros) => {
     }
 
     while ((!eventsChain.isBroken && !eventsChain.isCriticalError && !eventsChain.isSuccesful)){
+        let demand_aid = null;
         const controller = new AbortController();
         const timeout = setTimeout(()=>{controller.abort("TIMEDOUT")}, TIMEOUT_MS)
         try {
@@ -31,6 +41,13 @@ const getRequest = async (urlWithMacros) => {
             const response = await fetch(url, options);
             if(response.status >= 400){
                 handleErrorResponse(response.body);
+                producerInstance.sendMessage(broker_topic, JSON.stringify({
+                    requests: 1,
+                    impressions: 0,
+                    supply_aid: getAID(urlWithMacros),
+                    demand_aid: null,
+                    bundle: getBundle(urlWithMacros)
+                }))
                 clearTimeout(timeout)
                 break;
             }
@@ -38,18 +55,42 @@ const getRequest = async (urlWithMacros) => {
             eventsChain.previousURL = url
             if(response.status == 200){
                 options.headers['Cookies'] = cookies
+                eventsChain.eventChain = await dataToLog(response.headers, response.clone(), url);
                 url = chainRequest(await response.text(), eventsChain);
             }
             clearTimeout(timeout)
         } catch (err) {
-            if(err.name == 'AbortError') error(`${new Date().toISOString()} => ${err.message}`)
-            if(err.name == 'FetchError') error(`${new Date().toISOString()} => ${err.message}`)
-            else error(`${err.name}: ${err.message}`)
+            if(String(err).includes("AbortError")) { } else {
+                error(err)
+            }
+            // if(err.name.includes("Abort")) //error(`${new Date().toISOString()} => ${err.message}`)
+            // if(err.name == 'FetchError') error(`${new Date().toISOString()} => ${err.message}`)
+            // else error(`${err.name}: ${err.message} FROM: ${err}`)
         }
     }
     if(eventsChain.isSuccesful) {
+        //FAILS TO SEND SUCCESFUL REPORT
+        log(eventsChain.eventChain)
         await handleSuccesfulChain(eventsChain)
+        producerInstance.sendMessage(broker_topic, 
+            JSON.stringify({
+                requests: 1,
+                impressions: 1,
+                supply_aid: getAID(urlWithMacros),
+                demand_aid: null,
+                bundle: getBundle(urlWithMacros)
+            }))
     };
+    if(eventsChain.isBroken || eventsChain.isCriticalError){
+        producerInstance.sendMessage(broker_topic,
+        JSON.stringify({
+            requests: 1,
+            impressions: 0,
+            supply_aid: getAID(urlWithMacros),
+            demand_aid: null,
+            bundle: getBundle(urlWithMacros)
+        }))
+    }
     return eventsChain
 }
 
@@ -97,8 +138,8 @@ const handleURLAfterResponse = (data, options) => {
 
 const handleSuccesfulChain = async (chain) => {
     const res = await trigger(chain.XMLChain)
-    chain.eventChain.push(JSON.stringify(res))
-    log(`${new Date().toISOString()} --- Cadena Exitosa`)
+    //chain.eventChain.push(JSON.stringify(res))
+    log(`${new Date().toISOString()} --- Got an impression`)
 }
 
 const handleResponse = (body, chain) => {
@@ -117,23 +158,25 @@ const handleResponse = (body, chain) => {
  * @returns 
  */
 const dataToLog = async (requestHeaders, response, requestURL) => {
-    const data = {
-        date: new Date().toISOString(),
-        request:{
-            url:requestURL,
-            headers:requestHeaders,
-        },
-        response : {
-            url: response.url,
-            type: response.type,
-            ok: response.ok,
-            status: response.status,
-            headers: JSON.stringify(response.headers),
-        },
-        error: '',
-        body: await response.text(),
+    return { 
+        key: "report",
+        value : {
+            date: new Date().toISOString(),
+            request:{
+                url:requestURL,
+                headers:requestHeaders,
+            },
+            response : {
+                url: response.url,
+                type: response.type,
+                ok: response.ok,
+                status: response.status,
+                headers: JSON.stringify(response.headers),
+            },
+            error: '',
+            body: await response.text(),
+        }
     }
-    return data;
 }
 
 export { getRequest }

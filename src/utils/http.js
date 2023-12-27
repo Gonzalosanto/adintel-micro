@@ -102,4 +102,12 @@ const isValidURL = (string) => {
     }
 }
 
-export { getVASTTagURI, isValidURL, extractDataFrom , handleBrokenResponse, handleErrorResponse, handleCommonResponse, handleSuccesfulResponse, buildHeaders, baseFrom, addIfXMLResponse };
+const getBundle = (urlString) => {
+    return (new URLSearchParams(urlString)).get('app_bundle');
+}
+const getAID = (urlString) => {
+    return (new URLSearchParams(urlString)).get('aid');
+}
+
+
+export { getVASTTagURI, getAID, getBundle, isValidURL, extractDataFrom , handleBrokenResponse, handleErrorResponse, handleCommonResponse, handleSuccesfulResponse, buildHeaders, baseFrom, addIfXMLResponse };
