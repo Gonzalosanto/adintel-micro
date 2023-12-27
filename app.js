@@ -1,21 +1,15 @@
-import express from 'express';
-const app = express();
+import { App } from 'uWebSockets.js';
 import 'dotenv/config'
-import { router } from "./src/routes/index.js"
 import { consumeTopic } from './src/services/kafka/consumer.js';
 import { error } from './src/middlewares/logger/index.js';
-import { ProducerFactory } from './src/services/kafka/producer.js';
 
-app.use(router)
-
-app.listen(process.env.PORT, async ()=>{
-    const topic = 'reports-topic'
+App().listen(process.env.PORT, async (listenSocket)=>{
+    if(listenSocket) console.log("Server is listening on : " + process.env.PORT)
+    const test = 'test'
+    const VASTUrlTopic = 'topic'
     try {
-        const instance = ProducerFactory.getInstance();
-        if(!instance._isConnected){instance.start()}
-        await consumeTopic(topic)
+        consumeTopic(test)
     } catch (e) {
-        error(`Error consuming: ${topic}, ${e}`)
+        error(`Error consuming:${e}`)
     }
-    console.log("Server is listening on : " + process.env.PORT)
 })
